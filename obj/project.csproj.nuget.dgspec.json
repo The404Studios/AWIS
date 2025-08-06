@@ -69,7 +69,7 @@
             },
             "System.Drawing.Common": {
               "target": "Package",
-              "version": "[9.0.8, )"
+              "version": "[7.0.0, )"
             },
             "System.Speech": {
               "target": "Package",

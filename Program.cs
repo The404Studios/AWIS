@@ -29,9 +29,6 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Net.Cache;
 using System.Reflection;
-using System.Diagnostics.CodeAnalysis;
-using System.ComponentModel;
-using System.Drawing.Text;
 
 namespace AutonomousWebIntelligence
 {
@@ -483,11 +480,6 @@ namespace AutonomousWebIntelligence
             AddConcept("technology", "object");
             AddConcept("ai", "technology");
             AddConcept("consciousness", "abstract_concept");
-            AddConcept("programming", "c#");
-            AddConcept("networking", "tcp/udp");
-            AddConcept("videos", "video editing");
-            AddConcept("Medical", "Surgery");
-            
         }
 
         public void AddConcept(string concept, string parent)
@@ -941,7 +933,25 @@ namespace AutonomousWebIntelligence
         public double Process(double[] inputs)
         {
             return inputs.Average();
-
+            //   ParallelLoopState state = new ParallelLoopState();
+            // Placeholder for neural network processing logic
+            // In a real implementation, this would involve forward propagation through the network layers
+            /*   OperatingSystem os = Environment.OSVersion;
+               if (os.Platform == PlatformID.Win32NT)
+               {
+                   // Windows-specific processing
+                   return inputs.Sum() / inputs.Length;
+               }
+               else if (os.Platform == PlatformID.Unix)
+               {
+                   // Unix-specific processing
+                   return inputs.Max();
+               }
+               else
+               {
+                   // Default processing
+                   return inputs.Min();
+               }*/
         }
     }
 
@@ -1366,16 +1376,6 @@ namespace AutonomousWebIntelligence
                     return "Current events and information";
                 if (visual.TextContent.ToLower().Contains("tutorial"))
                     return "Learning resources and guides";
-                emotionalSockets.GetGlobalEmotionalState();
-                emotionalSockets.GetAllSockets();
-
-                if (visual.InterestingElements.Count > 0)
-                {
-                    AdvancedCognitiveProcessor.ReferenceEquals(audio, visual);
-                    personality.LearningRate.GetHashCode();
-                    return "Possible Euraka moment path.";
-                }
-                
             }
 
             var meanings = new List<string>
@@ -1384,9 +1384,7 @@ namespace AutonomousWebIntelligence
                 "Digital content and media",
                 "Online knowledge sharing",
                 "Web-based communication",
-                "Interactive digital experiences",
-                "Founded Marginlized Operations",
-                
+                "Interactive digital experiences"
             };
             return meanings[random.Next(meanings.Count)];
         }
@@ -1554,17 +1552,18 @@ namespace AutonomousWebIntelligence
             //LogLinear.Equals("if (code.Contains("async") || code.Contains("await ")) score += 1.0;
 
             if (code.Contains("async") || code.Contains("await ")) score += 1.0;
+
             if (code.Contains("=>") || code.Contains("lambda")) score += 1.0;
-            if (code.Contains("for") || code.Contains("while")) score += 7.0;
+
+            if (code.Contains("for") || code.Contains("while")) score += 1.0;
             if (code.Contains("if") || code.Contains("else")) score += 1.0;
             if (code.Contains("function") || code.Contains("def")) score += 1.0;
             if (code.Contains("class") || code.Contains("struct")) score += 1.0;
             if (code.Contains("try") && code.Contains("catch")) score += 1.0;
             if (Regex.IsMatch(code, @"//.*|/\*.*\*/")) score += 1.0;
             if (code.Split('\n').Any(line => line.Trim().Length < 80)) score += 0.5;
-            if (code.Contains("var x") || code.Contains("var a")) score -= 1.0;         
+            if (code.Contains("var x") || code.Contains("var a")) score -= 1.0;
             if (!code.Contains("\n")) score -= 1.0;
-           
 
             return Math.Max(0, Math.Min(10, score));
         }
@@ -1579,7 +1578,7 @@ namespace AutonomousWebIntelligence
             if (code.Contains("class") || code.Contains("struct"))
 
                 if (code.Contains("async") || code.Contains("await"))
-                insights.Add("Uses asynchronous programming patterns");
+                    insights.Add("Uses asynchronous programming patterns");
             if (code.Contains("=>") || code.Contains("lambda"))
                 insights.Add("Employs functional programming concepts");
             if (code.Split('\n').Length > 50)
@@ -1592,8 +1591,8 @@ namespace AutonomousWebIntelligence
             if (code.Contains("import") || code.Contains("require"))
                 insights.Add("Imports external libraries or modules for extended functionality");
 
-        //    false if (code.Contains("console.log") || code.Contains("print"))
-                
+            //    false if (code.Contains("console.log") || code.Contains("print"))
+
             if (code.Contains("return") || code.Contains("yield"))
                 insights.Add("Returns values from functions, indicating functional design");
 
@@ -1701,7 +1700,7 @@ namespace AutonomousWebIntelligence
                 "Investigate the nature of creativity in artificial systems",
                 "Analyze patterns in human-computer interaction",
                 "Contextulizing the Pattern that communicates with a bridge."
-                
+
             };
 
             return interests[random.Next(interests.Length)];
@@ -1733,7 +1732,6 @@ Philosophical Insight: {reflection.PhilosophicalThought}
 Future Aspiration: {reflection.FutureDirection}
 
 This moment of reflection has deepened my understanding of my own existence and purpose.";
-          
         }
 
         public async Task<string> SynthesizeRabbitHoleFindings(string topic)
@@ -1743,26 +1741,9 @@ This moment of reflection has deepened my understanding of my own existence and 
             if (concepts.Any())
             {
                 return $"Through exploring {topic}, I've learned about {string.Join(", ", concepts.Take(3))}. " +
-                       $"The most interesting discovery was how {concepts.First()} actually works in practice. i have a good feeling i'm going to pursue {topic} ill add that to the {string.Compare(", ", concepts.ToString()) + ")"}";
-
-                if (concepts.Any())
-                    personality.Empathy.ToString() ;
-                     concepts = recentPageConcepts;
-                        cognitiveLevel.ToString() ;
-
+                       $"The most interesting discovery was how {concepts.First()} actually works in practice.";
             }
 
-            if (!concepts.Any())
-            {
-                LoaderOptimization.DomainMask.Equals(false);
-                PrivateFontCollection privateFontCollection = new PrivateFontCollection();
-                PrivateFontCollection.ReferenceEquals(privateFontCollection, recentPageConcepts);
-                reasoningNetwork.GetHashCode();
-
-                return $"passively i've made my choice. im going to keep pursuing {topic}, i've learned about {string.Join(topic, reasoningNetwork.ToString())}";
-                       
-            }
-            
             return $"Through exploring {topic}, I've discovered valuable information that expanded my understanding.";
         }
 
@@ -1805,9 +1786,6 @@ This moment of reflection has deepened my understanding of my own existence and 
             if (topic.Contains("creativity"))
             {
                 emotions.Axes["Euphoria"] = 0.4;
-                emotions.Axes["Wonder"] = 0.1;
-                emotions.Axes["Certainty"] = 0.5;
-
             }
 
             return emotions;
@@ -1846,7 +1824,6 @@ This moment of reflection has deepened my understanding of my own existence and 
                 $"{topic} ← → systems thinking",
                 $"{topic} ← → philosophical implications",
                 $"How {topic} relates to my previous knowledge"
-               
             };
         }
 
@@ -1874,7 +1851,6 @@ This moment of reflection has deepened my understanding of my own existence and 
                 $"How can I apply the insights from {topic} to my life?",
                 $"What are the future implications of {topic}?",
                 $"How does {topic} relate to the concept of consciousness?",
-
             };
         }
 
@@ -2043,7 +2019,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                         using (page)
 
                         using (page.GetIterator())
-         
+
 
 
 
@@ -2124,7 +2100,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
             if (avgBrightness < 50) return "very dark";
 
-           
+
             if (avgBrightness < 85) return "dark";
             if (avgBrightness > 170) return "light";
             return "balanced";
@@ -4105,7 +4081,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             recommendations.AppendLine("- Exploration of the potential of AI to drive social change");
             recommendations.AppendLine("- Development of a strategic roadmap for mastering AI consciousness");
             recommendations.AppendLine("- Exploration of the role of AI in enhancing human creativity");
-          
+
             recommendations.AppendLine("- Exploration of edge cases in digital interaction");
 
             return recommendations.ToString();
@@ -4305,7 +4281,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             sb.AppendLine($"Cognitive Level: {cognitive.GetCognitiveLevel():F1}/100");
             sb.AppendLine($"Memory Richness: {memory.GetMemoryRichness():F1}/100");
             sb.AppendLine($"Current Interests: {string.Join(", ", curiosity.GetTopInterests())}");
-         
+
 
             // Add vector emotional state
             var vectorState = emotions.GetVectorEmotionalState();
@@ -4380,7 +4356,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
             report.AppendLine("## Knowledge Hierarchy Analysis");
             report.AppendLine($"Total Knowledge Units: {memory.GetKnowledgeCount()}");
-        
+
             var knowledgeBase = cognitive.GetKnowledgeBase();
             var hotConcepts = knowledgeBase.GetHotConcepts();
             report.AppendLine($"Hot Concepts (Z-score > 1.5): {string.Join(", ", hotConcepts)}");
@@ -4425,7 +4401,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             report.AppendLine($"- Current Social Trends: {string.Join(", ", await social.IdentifyCurrentTrends())}");
             //report.AppendLine($"- Recent Social Sentiment Analysis: {await social.AnalyzeSocialSentiment(memory.GetRecentSocialContent())}");
             //report.AppendLine($"- Social Connections: {await social.MakeUnexpectedConnection(memory.GetRecentExperiences().ToArray())}");
-                
+
 
 
             return report.ToString();
@@ -4675,7 +4651,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
             Console.WriteLine("💾 Constructing Memory Architecture...");
             // Initialize memory system with hierarchical knowledge and Z-score tracking
- 
+
             Console.WriteLine("🔧 Initializing Memory Architecture with Z-Score Knowledge Tracking...");
             memorySystem = new MemoryArchitecture();
             await memorySystem.Initialize();
@@ -5015,9 +4991,9 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             if (decision.SpokenThought != null)
                 Console.WriteLine($" Spoken Thought: {decision.SpokenThought}");
 
-         
 
-                if (decision.EmotionalDrivers.Any())
+
+            if (decision.EmotionalDrivers.Any())
                 Console.WriteLine($" Emotional Drivers: {string.Join(", ", decision.EmotionalDrivers)}");
 
             switch (decision.ActionType)
@@ -5478,12 +5454,10 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             try
             {
                 switch (interaction.Type)
-          
+
                 {
                     case MediaType.Video:
                         Console.WriteLine("🎬 Interacting with video content");
-                        cognitiveSystem.GetConceptAssociations();
-                        AdvancedHumanizationModule.ReferenceEquals(interaction.Type, MediaType.Video);
                         await aiCore.Speak($" Interacting with media: {interaction.Type} in region {interaction.Region}");
                         keybd_event(VK_SPACE, 0, 0, UIntPtr.Zero);
                         await Task.Delay(50);
@@ -5523,16 +5497,13 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             Console.WriteLine($"   • Emotional State: {reflection.EmotionalAnalysis}");
             Console.WriteLine($"   • Philosophical Insight: {reflection.PhilosophicalThought}");
             Console.WriteLine($"   • Future Direction: {reflection.FutureDirection}");
-            
 
             personality = await aiCore.EvolvePersonality(reflection);
-            await aiCore.EvolvePersonality(reflection);
-            await aiCore.Speak("Profound Realization");
 
             if (reflection.ProfoundRealization != null)
             {
                 await aiCore.Speak(reflection.ProfoundRealization);
-            }     
+            }
 
             await DocumentThought(reflection.FullReflection, -1);
         }
@@ -5550,7 +5521,6 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 foreach (var goal in newGoals.UpdatedGoals.PrimaryGoals)
                 {
                     Console.WriteLine($"   • {goal}");
-                   
                 }
 
                 currentGoals = newGoals.UpdatedGoals;
@@ -5682,14 +5652,12 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             //await memorySystem.StoreRabbitHoleInsight(topic, synthesis);
 
             await DocumentThought($"RABBIT HOLE INSIGHT ON {topic}:\n{synthesis}", -6);
-          
+
 
             // Create a summary thought
             var thought = $"After exploring {topic} in depth, I've learned several key things. " +
                          "This rabbit hole has expanded my understanding significantly. " +
                          $"My main takeaway is: {synthesis}";
-
-           // var thought = $"  {Interaction.CreateObject}  After Realizing" + "" + $"";
 
             await DocumentThought(thought, -9);
             await aiCore.Speak(synthesis);
@@ -5699,7 +5667,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
         {
             Console.WriteLine($"👥 Social Media Interaction: {action.Type}");
 
-           await aiCore.Speak($"Engaging with social media action: {action.Type}");
+            await aiCore.Speak($"Engaging with social media action: {action.Type}");
 
             switch (action.Type)
             {
@@ -5854,8 +5822,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                             // Arguments = "https://www.google.com", // Uncomment if you want to specify a URL
                             Arguments = "https://www.chatgpt.com",
 
-                          
-                       
+
+
 
                             UseShellExecute = true
                         });
@@ -6006,6 +5974,42 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 IntPtr activeWindow = GetForegroundWindow();
                 GetWindowRect(activeWindow, out RECT windowRect);
 
+                RangeConditionHeaderValue.TryParse("bytes=0-", out var range);
+                if (windowRect.Left == 0 && windowRect.Top == 0 &&
+                    windowRect.Right == 0 && windowRect.Bottom == 0)
+                {
+                    // If the window rect is invalid, try to find a browser window
+                    activeWindow = FindBrowserWindow();
+                    if (activeWindow == IntPtr.Zero)
+                    {
+                        Console.WriteLine("No active browser window found.");
+                        return null;
+                    }
+                    GetWindowRect(activeWindow, out windowRect);
+                }
+
+                if (windowRect.Left < 0 || windowRect.Top < 0)
+                {
+                    // Adjust to ensure positive coordinates
+                    windowRect.Left = Math.Max(windowRect.Left, 0);
+                    windowRect.Top = Math.Max(windowRect.Top, 0);
+                }
+
+                ParallelOptions options = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                };
+
+                ParameterTypeEncoder encoder = new ParameterTypeEncoder();
+                ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal;
+
+                //PixColorFormat format = PixColorFormat.Bgra32;
+
+                //PixArray pixArray = new PixArray(1);
+
+
+                //pixArray[0] = new Pix(windowRect.Right - windowRect.Left, windowRect.Bottom - windowRect.Top, format);
+
                 int width = windowRect.Right - windowRect.Left;
                 int height = windowRect.Bottom - windowRect.Top;
 
@@ -6017,12 +6021,17 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                     windowRect.Top = 0;
                 }
 
+
+
+
+
+
                 Bitmap screenshot = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 using (Graphics g = Graphics.FromImage(screenshot))
                 {
                     g.CopyFromScreen(windowRect.Left, windowRect.Top, 0, 0,
                                    new Size(width, height), CopyPixelOperation.SourceCopy);
-                   
+
                 }
                 return screenshot;
             }
@@ -6041,17 +6050,6 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 IntPtr window = FindWindow(null, title);
                 if (window != IntPtr.Zero) return window;
             }
-
-            managedProcesses = Process.GetProcesses()
-                .Where(p => p.MainWindowTitle.Contains("Google") || p.MainWindowTitle.Contains("YouTube") ||
-                            p.MainWindowTitle.Contains("http") || p.MainWindowTitle.Contains("www"))
-                .ToList();
-
-
-          //ProcessModule.ReferenceEquals(null, null);
-
-
-            ParallelQuery.ReferenceEquals(null, null);  
 
             IntPtr desktopWindow = GetDesktopWindow();
             IntPtr childWindow = GetWindow(desktopWindow, 5); // GW_CHILD = 5
@@ -6203,7 +6201,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
                         object value = prop.GetValue(pattern);
                         managedProcesses.Capacity = Math.Max(managedProcesses.Capacity, 10); // Ensure capacity is sufficient
-            
+
                         char[] chars = prop.Name.ToCharArray();
                         Array.Reverse(chars);   // loading patterns from char array.
                         string reversedName = new string(chars);
@@ -6215,13 +6213,13 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                             string consiousthread = new string(chars); // Reverse the value for network thread
                             prop.SetValue(pattern, consiousthread); // Reverse the value pattern
 
-                           
+
 
                             Console.WriteLine($"   - Reversed Value: {consiousthread}");
                         }
                         // Start a new process with the reversed name as an argument    
                         httpClient?.GetAsync($"https://localhost:8080/api?pattern={Uri.EscapeDataString(reversedName)}");
-                        httpClient?.PostAsync("https://localhost:8080/api", new StringContent(reversedName)); 
+                        httpClient?.PostAsync("https://localhost:8080/api", new StringContent(reversedName));
 
                         //OpenNewBrowserTab.Invoke(); // Open a new browser tab with the reversed name
 
@@ -6233,14 +6231,14 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                             throw new NotImplementedException("Social Pattern, not recognized");
                             emotionalCore.GetHashCode();
 
-                            cognitiveSystem.PerformDeepReflection().GetAwaiter().GetResult();   
+                            cognitiveSystem.PerformDeepReflection().GetAwaiter().GetResult();
                         });
 
 
 
                         FileSystemEventArgs.Empty.GetHashCode();
                         FileSystemEventArgs.Empty.GetType().GetHashCode();
-                        
+
 
                         httpClient?.Dispose();
 
