@@ -17,6 +17,10 @@
 
 ---
 
+Requirements
+
+tessdata/eng.traindata < make sure this is a folder you make in the directory where you compiled the executable.
+
 ## 🌟 Overview
 
 AWIS (Autonomous Web Intelligence System) is a cutting-edge experimental AI that autonomously navigates the web, learns from its experiences, and develops its own understanding of digital culture. Unlike traditional web scrapers or bots, AWIS possesses:
