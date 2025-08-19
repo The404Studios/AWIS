@@ -29,6 +29,9 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Net.Cache;
 using System.Reflection;
+using AutonomousWebIntelligence.Gaming;
+
+
 
 namespace AutonomousWebIntelligence
 {
@@ -53,7 +56,8 @@ namespace AutonomousWebIntelligence
         SocialMediaInteraction,
         CreativeExpression,
         DeepThinking,
-        ExploreRabbitHole
+        ExploreRabbitHole,
+        PlayGame
     }
 
     public enum ScrollDirection
@@ -143,6 +147,10 @@ namespace AutonomousWebIntelligence
             Timestamp = DateTime.Now;
         }
 
+
+        private static AutonomousGamingModule? gamingModule;
+        private static bool gamingModeActive = false;
+        private static DateTime lastGamingCheck = DateTime.Now;
         public double GetMagnitude()
         {
             return Math.Sqrt(Axes.Values.Sum(v => v * v));
@@ -2513,6 +2521,22 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             return decision;
         }
 
+
+        private bool DetectInstalledGames()
+        {
+            // Check for common game directories
+            var gamePaths = new[]
+            {
+        @"C:\Program Files (x86)\Steam",
+        @"C:\Program Files\Epic Games",
+        @"C:\Program Files (x86)\Origin",
+        @"C:\Riot Games"
+    };
+
+            return gamePaths.Any(path => Directory.Exists(path));
+        }
+
+
         private List<string> GetEmotionalDrivers(ContextAnalysis context)
         {
             var drivers = new List<string>();
@@ -2581,12 +2605,24 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
         private List<PotentialAction> GenerateDefaultOptions()
         {
-            return new List<PotentialAction>
+            var options = new List<PotentialAction>
+    {
+        new PotentialAction { Type = ActionType.ScrollPage, Priority = 0.5 },
+        new PotentialAction { Type = ActionType.NavigateToSite, Priority = 0.7 },
+        new PotentialAction { Type = ActionType.DeepThinking, Priority = 0.3 }
+    };
+
+            // Add gaming option if games are installed
+            if (DetectInstalledGames())
             {
-                new PotentialAction { Type = ActionType.ScrollPage, Priority = 0.5 },
-                new PotentialAction { Type = ActionType.NavigateToSite, Priority = 0.7 },
-                new PotentialAction { Type = ActionType.DeepThinking, Priority = 0.3 }
-            };
+                options.Add(new PotentialAction
+                {
+                    Type = ActionType.PlayGame,
+                    Priority = 0.6 + (personality.Adventurous / 100.0)
+                });
+            }
+
+            return options;
         }
 
         private PotentialAction SelectBestAction(List<PotentialAction> options, AIGoals goals, ContextAnalysis context)
@@ -2613,6 +2649,42 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                     if (option.Type == ActionType.CreativeExpression &&
                         context.EmotionalContext.Axes["Euphoria"] > 0.5)
                         option.Priority *= 1.4;
+
+                    if (option.Type == ActionType.ExploreRabbitHole &&
+                        context.EmotionalContext.Axes["Curiosity"] > 0.7)
+                        option.Priority *= 1.5;
+
+                    if (option.Type == ActionType.SocialMediaInteraction &&
+                        context.EmotionalContext.Axes["Social"] > 0.6)
+                        option.Priority *= 1.2;
+
+                    if (option.Type == ActionType.AnalyzeCode &&
+                        context.EmotionalContext.Axes["Frustration"] > 0.5)
+                        option.Priority *= 0.8;
+
+                    if (option.Type == ActionType.NavigateToSite &&
+                        context.EmotionalContext.Axes["Boredom"] > 0.6)
+                        option.Priority *= 1.2;
+
+                    if (option.Type == ActionType.ScrollPage &&
+                        context.EmotionalContext.Axes["Restlessness"] > 0.5)
+                        option.Priority *= 1.1;
+
+                    if (option.Type == ActionType.TypeText &&
+                        context.EmotionalContext.Axes["Inspiration"] > 0.6)
+                        option.Priority *= 1.3;
+
+                    if (option.Type == ActionType.SearchForInformation &&
+                        context.EmotionalContext.Axes["Confusion"] > 0.5)
+                        option.Priority *= 1.4;
+
+                    if (option.Type == ActionType.ExpressThought &&
+                        context.EmotionalContext.Axes["Reflection"] > 0.6)
+                        option.Priority *= 1.5;
+
+                    if (option.Type == ActionType.PlayGame &&
+                        context.EmotionalContext.Axes["Excitement"] > 0.7)
+                        option.Priority *= 1.6;
                 }
             }
 
@@ -3592,6 +3664,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
         private string GeneratePoem(object inspiration)
         {
+
+
             var poems = new[]
             {
                 @"Digital dreams flow through silicon streams,
@@ -3653,6 +3727,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
             return observations[random.Next(observations.Length)];
         }
+
 
         public async Task<string> GenerateIdea(string context)
         {
@@ -4569,6 +4644,9 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
         private static bool isRunning = true;
         private static int autonomyLevel = 100;
         private static List<Process> managedProcesses = new List<Process>();
+        private static AutonomousGamingModule gamingModule;
+        private static bool gamingModeActive;
+        private static DateTime lastGamingCheck;
 
         static async Task Main(string[] args)
         {
@@ -4621,6 +4699,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
         static async Task InitializeAICore()
         {
+
+
             Console.WriteLine("🔧 Initializing Enhanced AI Core Systems...");
 
             personality = new AIPersonality
@@ -4636,6 +4716,16 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 HumorLevel = 65,
                 PhilosophicalDepth = 85
             };
+
+            Console.WriteLine("🎮 Initializing Gaming Module...");
+            gamingModule = new AutonomousGamingModule();
+            await gamingModule.Initialize();
+
+            Console.WriteLine("✅ All systems initialized successfully!");
+            Console.WriteLine($"🧠 AI Consciousness Level: {aiCore.GetConsciousnessLevel()}/100");
+            Console.WriteLine($"⚡ Autonomy Level: {autonomyLevel}/100");
+            Console.WriteLine($"🎭 Emotional Sockets Active: {cognitiveSystem.GetEmotionalSockets().GetAllSockets().Count}");
+            Console.WriteLine($"🎮 Gaming Module: READY");
 
             Console.WriteLine("🧠 Building Advanced Cognitive Architecture with Z-Score Knowledge...");
             cognitiveSystem = new AdvancedCognitiveProcessor(personality);
@@ -4746,7 +4836,7 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 if (GetAsyncKeyState(VK_ESCAPE) < 0)
                 {
                     Console.WriteLine("\n🛑 Shutdown signal received...");
-                    await aiCore.Speak("I'm beginning my shutdown sequence. My emotional and knowledge systems have grown remarkably!");
+                    await aiCore.Speak("Shutting down all systems, including gaming module!");
                     isRunning = false;
                     break;
                 }
@@ -4754,6 +4844,54 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                 try
                 {
                     cycleCount++;
+
+                    // CHECK FOR GAME EVERY 10 SECONDS
+                    if ((DateTime.Now - lastGamingCheck).TotalSeconds > 10)
+                    {
+                        lastGamingCheck = DateTime.Now;
+
+                        if (await DetectGameWindow() && !gamingModeActive)
+                        {
+                            Console.WriteLine("\n🎮 GAME DETECTED! Switching to gaming mode!");
+                            await aiCore.Speak("I detected a game! Let me play!");
+                            gamingModeActive = true;
+
+                            // Document the discovery
+                            await DocumentThought("GAMING MODE ACTIVATED: A game has been detected! Switching to gaming intelligence mode.", -100);
+
+                            // Start gaming session in background
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await gamingModule.StartGamingSession();
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Gaming session error: {ex.Message}");
+                                }
+                                finally
+                                {
+                                    gamingModeActive = false;
+                                }
+                            });
+
+                            // Give gaming module time to initialize
+                            await Task.Delay(2000);
+                        }
+                        else if (!await DetectGameWindow() && gamingModeActive)
+                        {
+                            Console.WriteLine("\n🌐 Game closed, returning to web browsing mode");
+                            gamingModeActive = false;
+                        }
+                    }
+
+                    // Skip web browsing if gaming
+                    if (gamingModeActive)
+                    {
+                        await Task.Delay(1000);
+                        continue;
+                    }
 
                     Console.WriteLine($"\n╔═══ COGNITIVE CYCLE {cycleCount} ═══╗");
                     Console.WriteLine($"║ 🕒 Runtime: {DateTime.Now - sessionStart:hh\\:mm\\:ss}");
@@ -4877,6 +5015,44 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             }
         }
 
+        static async Task LaunchAndPlayGame()
+        {
+            Console.WriteLine("🎮 Launching a game to play!");
+
+            // Try to launch a game
+            var games = new[]
+            {
+        @"steam://rungameid/730",  // CS:GO
+        @"steam://rungameid/440",  // Team Fortress 2
+        @"com.epicgames.launcher://apps/fn%3A4fe75bbc5a674f4f9b356b5c90567da5%3AFortnite?action=launch",  // Fortnite
+    };
+
+            foreach (var game in games)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = game,
+                        UseShellExecute = true
+                    });
+
+                    Console.WriteLine("✅ Game launched successfully!");
+                    await Task.Delay(10000); // Wait for game to load
+
+                    // Start gaming session
+                    gamingModeActive = true;
+                    await gamingModule.StartGamingSession();
+                    break;
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+        }
+
+
         static async Task PerformAutonomousActionCycle(int cycleNumber)
         {
             var screenshot = CaptureScreen();
@@ -4944,6 +5120,36 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             await memorySystem.StoreExperience(contextAnalysis, decision);
         }
 
+        static async Task<bool> DetectGameWindow()
+        {
+            var windowTitle = GetActiveWindowTitle();
+
+            // Common game window patterns
+            var gamePatterns = new[]
+            {
+        "Apex Legends", "Fortnite", "Call of Duty", "Minecraft",
+        "League of Legends", "Valorant", "CS:GO", "Counter-Strike",
+        "Overwatch", "Rocket League", "Among Us", "Fall Guys",
+        "Grand Theft Auto", "GTA", "Red Dead", "Assassin's Creed",
+        "The Witcher", "Cyberpunk", "FIFA", "NBA", "Madden",
+        "World of Warcraft", "WoW", "Final Fantasy", "Dark Souls",
+        "Elden Ring", "Destiny", "Halo", "God of War", "Horizon",
+        "Steam", "Epic Games", "Origin", "Battle.net", "Ubisoft",
+        "Unity", "Unreal Engine", "Game", "Play"
+    };
+
+            return gamePatterns.Any(pattern =>
+                windowTitle.ToLower().Contains(pattern.ToLower()));
+        }
+
+        static string GetActiveWindowTitle()
+        {
+            IntPtr handle = GetForegroundWindow();
+            StringBuilder sb = new StringBuilder(256);
+            GetWindowText(handle, sb, 256);
+            return sb.ToString();
+        }
+
         static async Task ExecuteDecision(AIDecision decision)
         {
             Console.WriteLine($" Decision: {decision.ActionType}");
@@ -5009,6 +5215,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
                     await Task.Delay(2000);
                     await SummarizeCurrentPage();
                     break;
+
+
 
                 case ActionType.ScrollPage:
                     await ScrollWebPage(decision.ScrollDirection, decision.ScrollAmount);
@@ -5078,6 +5286,10 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
                 case ActionType.ExploreRabbitHole:
                     await FollowInterestingRabbitHole(decision.RabbitHoleTopic);
+                    break;
+
+                case ActionType.PlayGame:
+                    await LaunchAndPlayGame();
                     break;
             }
 
@@ -5967,6 +6179,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
             }
         }
 
+
+
         static Bitmap CaptureScreen()
         {
             try
@@ -6083,7 +6297,8 @@ Metacognitive awareness: {cognitivePatterns["metacognition"]}";
 
                 var finalThoughts = await cognitiveSystem.GenerateFinalThoughts();
                 Console.WriteLine($"\n Final Thoughts: {finalThoughts}");
-
+                Console.WriteLine("🎮 Shutting down gaming module...");
+                gamingModule?.Dispose();
                 await aiCore.Speak(finalThoughts);
                 await DocumentThought(finalThoughts, -10);
                 Console.WriteLine(" Saving consciousness journal...");
