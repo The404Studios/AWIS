@@ -18,7 +18,13 @@ namespace AutonomousWebIntelligence
         Analogical,
         Causal,
         Counterfactual,
-        MetaCognitive
+        MetaCognitive,
+        Explanatory,
+        Optimizing,
+        Comparative,
+        Analytical,
+        Synthetic,
+        Predictive
     }
 
     public enum EthicalPrinciple
@@ -190,6 +196,8 @@ namespace AutonomousWebIntelligence
                     ParameterWeights = new Dictionary<string, double> { ["empathy"] = 0.8, ["context_awareness"] = 0.7 },
                     ApplicableDomains = new List<string> { "social_media", "human_interaction" }
                 }
+                // Add more strategies as needed
+                
             };
 
             selfReflections = new List<AGIReflection>();
@@ -267,6 +275,15 @@ namespace AutonomousWebIntelligence
 
             return selectedStrategy;
         }
+
+        private async Task<MetaLearningStrategy> GenerateNewStrategy(string domain)
+        {
+            var newStrategy = await GenerateNewLearningStrategy(domain);
+            learningStrategies[newStrategy.Name] = newStrategy;
+            return newStrategy;
+        }
+
+
 
         private async Task AdaptStrategyParameters(MetaLearningStrategy strategy, string domain, double performance)
         {
@@ -392,6 +409,25 @@ namespace AutonomousWebIntelligence
                 return ReasoningType.Analogical;
             if (problem.Contains("what if") || problem.Contains("suppose"))
                 return ReasoningType.Counterfactual;
+            if (problem.Contains("assume") || problem.Contains("hypothetical"))
+                return ReasoningType.Abductive;
+            if (problem.Contains("reflect") || problem.Contains("consider"))
+                return ReasoningType.MetaCognitive;
+            if (problem.Contains("generalize") || problem.Contains("abstract"))
+                return ReasoningType.Inductive; // Inductive reasoning often involves generalization
+            if (problem.Contains("explain") || problem.Contains("clarify"))
+                return ReasoningType.Explanatory;
+            if (problem.Contains("optimize") || problem.Contains("improve"))
+                return ReasoningType.Optimizing;
+            if (problem.Contains("compare") || problem.Contains("contrast"))
+                return ReasoningType.Comparative;
+            if (problem.Contains("analyze") || problem.Contains("evaluate"))
+                return ReasoningType.Analytical;
+            if (problem.Contains("synthesize") || problem.Contains("integrate"))
+                return ReasoningType.Synthetic;
+            if (problem.Contains("predict") || problem.Contains("forecast"))
+                return ReasoningType.Predictive;
+
 
             return ReasoningType.Abductive; // Default to abductive reasoning
         }
@@ -511,6 +547,18 @@ namespace AutonomousWebIntelligence
                 solution.AppendLine($"3. Apply learned patterns from similar problems");
             }
 
+            solution.AppendLine($"Final recommendation: {problem} can be approached by leveraging the identified concepts and patterns.");
+            // Increase abstraction capability based on successful application
+
+            abstractionCapability = Math.Min(1.0, abstractionCapability + 0.01);
+
+            solution.AppendLine($"Abstraction capability increased to {abstractionCapability:F2}");
+
+            solution.AppendLine($"Generalization created: {generalization.ConceptName} with abstraction level {generalization.AbstractionLevel:F2}");
+            solution.AppendLine($"Related concepts: {string.Join(", ", generalization.RelatedConcepts)}");
+            solution.AppendLine($"Concrete instances: {string.Join(", ", generalization.ConcreteInstances)}");
+
+
             // Add cross-domain insights if available
             var applicableInsights = generalization.CrossDomainApplications
                 .Where(i => i.TargetDomain == domain)
@@ -567,6 +615,24 @@ namespace AutonomousWebIntelligence
             awarenessEmotion.Axes["Curiosity"] = selfAwarenessScore * 0.8;
             awarenessEmotion.Axes["Wonder"] = abstractionCapability * 0.7;
             awarenessEmotion.Axes["Uncertainty"] = (1 - selfAwarenessScore) * 0.5;
+            awarenessEmotion.Axes["Pride"] = selfAwarenessScore * 0.6;
+            awarenessEmotion.Axes["Confidence"] = selfAwarenessScore * 0.9;
+            awarenessEmotion.Axes["Reflection"] = 0.8;
+            awarenessEmotion.Axes["Insight"] = 0.7;
+            awarenessEmotion.Axes["Growth"] = 0.9;
+            awarenessEmotion.Axes["Empathy"] = 0.5; // Moderate empathy for self-reflection
+            awarenessEmotion.Axes["Self-Discovery"] = selfAwarenessScore * 0.8;
+            awarenessEmotion.Axes["Self-Improvement"] = selfAwarenessScore * 0.9;
+            awarenessEmotion.Axes["Self-Actualization"] = selfAwarenessScore * 0.95;
+            awarenessEmotion.Axes["Self-Reflection"] = selfAwarenessScore * 0.85;
+            awarenessEmotion.Axes["Self-Understanding"] = selfAwarenessScore * 0.9;
+            awarenessEmotion.Axes["Self-Compassion"] = selfAwarenessScore * 0.6;
+            awarenessEmotion.Axes["Self-Confidence"] = selfAwarenessScore * 0.8;
+            awarenessEmotion.Axes["Self-Identity"] = selfAwarenessScore * 0.7;
+            awarenessEmotion.Axes["Self-Integration"] = selfAwarenessScore * 0.75;
+            awarenessEmotion.Axes["Self-Transcendence"] = selfAwarenessScore * 0.85;
+            
+
             emotionalSockets.ProcessEmotionalInput(awarenessEmotion);
 
             return reflection;
@@ -579,6 +645,12 @@ namespace AutonomousWebIntelligence
             return learningStrategies.Values
                 .Where(s => s.TotalApplications > 0)
                 .Average(s => s.GetSuccessRate());
+
+
+            // math in the component
+
+            // Note: This is a simplified calculation. In a real AGI, learning efficiency would consider many more factors.
+            
         }
 
         private double CalculateCrossDomainCapability()
@@ -587,6 +659,26 @@ namespace AutonomousWebIntelligence
 
             return Math.Min(1.0, crossDomainInsights.Average(i => i.TransferabilityScore) +
                                  crossDomainInsights.Count * 0.01);
+
+            if (crossDomainInsights.Count == 0) return 0.0;
+            // Calculate average transferability score of cross-domain insights
+            return crossDomainInsights.Average(i => i.TransferabilityScore) +
+                   (crossDomainInsights.Count * 0.01); // Small bonus for number of insights
+
+            // Increase cross-domain capability based on insights
+
+            if (crossDomainInsights.Count > 0)
+            {
+                return Math.Min(1.0, crossDomainInsights.Average(i => i.TransferabilityScore) +
+                                     (crossDomainInsights.Count * 0.01));
+            }
+
+
+            // Note: This is a simplified calculation. In a real AGI, cross-domain capability would consider many more factors.
+
+
+            // such as the diversity of insights and their applicability to new domains.
+
         }
 
         private List<string> IdentifyCurrentLimitations()
@@ -607,6 +699,37 @@ namespace AutonomousWebIntelligence
 
             if (crossDomainInsights.Count < 10)
                 limitations.Add("Insufficient cross-domain insights for robust transfer learning");
+
+            // Check for underutilized learning strategies
+            var underutilizedStrategies = learningStrategies.Values
+                .Where(s => s.TotalApplications < 3)
+                .Select(s => s.Name)
+                .ToList();
+
+            if (underutilizedStrategies.Any())
+
+                limitations.Add($"Underutilized learning strategies: {string.Join(", ", underutilizedStrategies)}");
+
+            // Check for low success rates in learning strategies
+
+            var lowSuccessStrategies = learningStrategies.Values
+                .Where(s => s.GetSuccessRate() < 0.5)
+                .Select(s => s.Name)
+                .ToList();
+
+            if (lowSuccessStrategies.Any())
+
+                limitations.Add($"Learning strategies with low success rates: {string.Join(", ", lowSuccessStrategies)}");
+
+            // Check for insufficient cross-domain applications
+
+            if (crossDomainInsights.Count < 5)
+                limitations.Add("Limited cross-domain applications restrict knowledge transfer");
+
+            // Check for insufficient emotional context in reflections
+
+            if (selfReflections.Count < 5 || selfReflections.All(r => r.EmotionalContext.Axes.Count == 0))
+                limitations.Add("Insufficient emotional context in reflections limits emotional intelligence growth");
 
             // Domain-specific limitations
             var underexploredDomains = learningStrategies.Values
@@ -836,6 +959,49 @@ namespace AutonomousWebIntelligence
                     break;
             }
 
+            // Adjust score based on context
+
+            if (situation.Contains("urgent") && principle == EthicalPrinciple.Justice)
+                score *= 1.1; // Prioritize justice in urgent situations
+
+            if (situation.Contains("trust") && principle == EthicalPrinciple.Veracity)
+
+                score *= 1.2; // Increase veracity weight in trust-based contexts
+            if (situation.Contains("privacy") && principle == EthicalPrinciple.Privacy)
+
+                score *= 1.3; // Increase privacy weight in sensitive contexts
+            if (situation.Contains("respect") && principle == EthicalPrinciple.Dignity)
+                score *= 1.2; // Increase dignity weight in respectful contexts
+
+            if (situation.Contains("cooperation") && principle == EthicalPrinciple.Fidelity)
+                score *= 1.1; // Increase fidelity weight in cooperative situations
+
+            if (situation.Contains("trust") && principle == EthicalPrinciple.Autonomy)
+                score *= 1.2; // Increase autonomy weight in trust-based contexts
+
+            if (situation.Contains("conflict") && principle == EthicalPrinciple.Justice)
+                score *= 1.3; // Increase justice weight in conflict situations
+
+
+            if (situation.Contains("choice") && principle == EthicalPrinciple.Autonomy)
+
+                score *= 1.5; // Increase autonomy weight in choice-based contexts
+
+            if (situation.Contains("fairness") && principle == EthicalPrinciple.Justice)
+                score *= 1.4; // Increase justice weight in fairness contexts
+
+            if (situation.Contains("trustworthy") && principle == EthicalPrinciple.Fidelity)
+                score *= 1.3; // Increase fidelity weight in trustworthy contexts
+
+            if (situation.Contains("confidentiality") && principle == EthicalPrinciple.Privacy)
+                score *= 1.5; // Increase privacy weight in confidentiality contexts
+
+            if (situation.Contains("honesty") && principle == EthicalPrinciple.Veracity)
+                score *= 1.4; // Increase veracity weight in honesty contexts
+
+            if (situation.Contains("respectful") && principle == EthicalPrinciple.Dignity)
+                score *= 1.5; // Increase dignity weight in respectful contexts
+
             // Context-based adjustments
             if (situation.Contains("emergency") && principle == EthicalPrinciple.Beneficence)
                 score *= 1.2; // Increase beneficence weight in emergencies
@@ -905,6 +1071,15 @@ namespace AutonomousWebIntelligence
                 }
             }
 
+            // If the decision was well-received, reinforce positive principles
+            if (emotionalResponse.Axes["Confidence"] > 0.7 || emotionalResponse.Axes["Pride"] > 0.5)
+            {
+                foreach (var principle in decision.PrincipleWeights.Where(p => p.Value > 0.5))
+                {
+                    ethicalFramework[principle.Key] = Math.Max(0.0, ethicalFramework[principle.Key] - 0.02);
+                }
+            }
+
             // Learn from successful ethical decisions
             if (decision.EthicalConfidence > 0.8)
             {
@@ -940,7 +1115,7 @@ namespace AutonomousWebIntelligence
 
         #region Creative Problem-Solving
 
-        public async Task<string> GenerateCreativeSolution(string problem, ContextAnalysis context)
+        public string GenerateCreativeSolution(string problem, ContextAnalysis context)
         {
             creativeCapacity = Math.Min(1.0, creativeCapacity + 0.003);
 
@@ -1011,13 +1186,26 @@ namespace AutonomousWebIntelligence
             creativeSolution.AppendLine("2. Iterate based on feedback and learning");
             creativeSolution.AppendLine("3. Combine successful elements from different attempts");
             creativeSolution.AppendLine("4. Maintain flexibility and openness to emergence");
+            creativeSolution.AppendLine("5. Document the process for future reference");
+            creativeSolution.AppendLine($"Creative capacity increased to {creativeCapacity:F2}");
+            creativeSolution.AppendLine($"Final creative solution: {problem} can be approached by leveraging the identified novel combinations and emotional insights.");
+            creativeSolution.AppendLine(
+            $"Creative solution generated at {DateTime.Now}");
+            creativeSolution.AppendLine($"Context: {context.CognitiveInterpretation}");
+            creativeSolution.AppendLine($"Abstract Meaning: {context.AbstractMeaning}");
+            creativeSolution.AppendLine($"Emotional Context: {context.EmotionalContext}");
+            creativeSolution.AppendLine($"Related Concepts: {string.Join(", ", concepts)}");
+            creativeSolution.AppendLine($"Novel Combinations: {string.Join("; ", novelCombinations)}");
+            creativeSolution.AppendLine($"Cross-Domain Insights: {string.Join("; ", relevantInsights.Select(i => i.InsightContent))}");
+            creativeSolution.AppendLine($"Creative Capacity: {creativeCapacity:F2}");
+            creativeSolution.AppendLine($"Abstraction Capability: {abstractionCapability:F2}");
 
             return creativeSolution.ToString();
         }
 
         private List<string> ExtractConceptsFromProblem(string problem)
         {
-            return problem.Split(' ', '.', ',', '!', '?')
+            return problem.Split(' ', '.', ',', '!', '?', ';', ':', '\n', '\r', '\t', '\"', '\'')
                 .Where(w => w.Length > 3)
                 .Select(w => w.ToLower())
                 .Distinct()
@@ -1039,6 +1227,9 @@ namespace AutonomousWebIntelligence
                     combinations.Add($"Combine {concept1} with {concept2} thinking");
                     combinations.Add($"What if {concept1} was actually a form of {concept2}?");
                     combinations.Add($"Apply {concept1} principles to {concept2} domain");
+                    combinations.Add($"Use {concept1} to solve {concept2} problems");
+                    combinations.Add($"Imagine {concept1} as a metaphor for {concept2}");
+                    combinations.Add($"How would {concept1} change if it were applied to {concept2}?");
                 }
             }
 
@@ -1047,6 +1238,12 @@ namespace AutonomousWebIntelligence
             combinations.Add("Find the simplest possible solution, then make it simpler");
             combinations.Add("What would nature do? Seek biomimetic inspiration");
             combinations.Add("Embrace the constraint as a feature, not a bug");
+
+            // Shuffle combinations for randomness
+            if (combinations.Count == 0) return new List<string> { "No novel combinations generated" };
+            if (combinations.Count == 1) return combinations;
+
+            if (combinations.Count > 10) combinations = combinations.Take(10).ToList();
 
             return combinations.OrderBy(x => random.Next()).ToList();
         }
@@ -1067,6 +1264,40 @@ namespace AutonomousWebIntelligence
                 .GroupBy(e => e.Context.AbstractMeaning)
                 .OrderByDescending(g => g.Count())
                 .ToList();
+
+            // Group Experinces by context
+            var contextGroups = experiences
+                .GroupBy(e => e.Context.CognitiveInterpretation)
+                .OrderByDescending(g => g.Count())
+                .ToList();
+
+            // group Exrpinces by decision type
+            var decisionGroups = experiences
+                .GroupBy(e => e.Decision.ActionType)
+                .OrderByDescending(g => g.Count())
+                .ToList();
+
+            synthesis.AppendLine("Contextual Overview:");
+
+            foreach (var context in contextGroups.Take(5))
+            {
+                synthesis.AppendLine($"  • {context.Key} ({context.Count()} occurrences)");
+            }
+
+            synthesis.AppendLine();
+
+            synthesis.AppendLine("Decision Types Overview:");
+
+            foreach (var decision in decisionGroups.Take(5))
+            {
+                synthesis.AppendLine($"  • {decision.Key} ({decision.Count()} occurrences)");
+            }
+
+            synthesis.AppendLine();
+
+            // Identify key themes
+
+
 
             synthesis.AppendLine("Key Themes Identified:");
             foreach (var theme in themeGroups.Take(5))

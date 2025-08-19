@@ -15,6 +15,7 @@ using System.Collections.Concurrent;
 using System.Speech.Synthesis;
 using NAudio.Wave;
 using Tesseract;
+using System.ComponentModel.Design;
 
 namespace AutonomousWebIntelligence.Gaming
 {
@@ -84,7 +85,8 @@ namespace AutonomousWebIntelligence.Gaming
         Camping,
         Kiting,
         TankAndSpank,
-        HitAndRun
+        HitAndRun,
+        None
     }
 
     public enum GameAction
@@ -969,7 +971,8 @@ namespace AutonomousWebIntelligence.Gaming
                 { GameGenre.Puzzle, new PuzzleStrategy() },
                 { GameGenre.MOBA, new MOBAStrategy() },
                 { GameGenre.BattleRoyale, new BattleRoyaleStrategy() },
-                { GameGenre.Survival, new SurvivalStrategy() }
+                { GameGenre.Survival, new SurvivalStrategy() },
+
             };
         }
 
@@ -992,6 +995,25 @@ namespace AutonomousWebIntelligence.Gaming
             {
                 decision = await ApplyCombatStrategy(decision, context);
             }
+            
+
+            //
+            if (voice != null)
+            {
+                try
+                {
+                    voice.SpeakAsync(decision.Reasoning);
+                }
+                catch
+                {
+                    Console.WriteLine("⚠️ Voice synthesis failed");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Decision: {decision.Action} - {decision.Reasoning}");
+
+            }
 
             // Risk assessment
             decision.RiskAssessment = await AssessRisks(context, decision);
@@ -999,8 +1021,24 @@ namespace AutonomousWebIntelligence.Gaming
             // Adjust based on performance metrics
             decision = await OptimizeBasedOnPerformance(decision);
 
+            //            // Update memory with new decision
+            if (decisionQueue.Count >= 100)
+            {
+                decisionQueue.TryDequeue(out _); // Remove oldest decision if queue is full
+            }
+
+            decision.EstimatedDuration = TimeSpan.FromSeconds(random.Next(1, 5)); // Estimate duration based on action
+            decision.ActionSequence.Clear(); // Clear previous action sequence
+            decision.ActionSequence.Add(decision.Action); // Add current action to sequence
+            decision.ActionSequence.AddRange(decision.ActionSequence); // Add any additional actions in sequence
+            // If decision has a target object, add it to the action sequence
+
             // Learn from decision
             await LearnFromContext(context, decision);
+
+            decision.Confidence = CalculateConfidence(context, decision);
+            decisionQueue.Enqueue(decision);
+
 
             return decision;
         }
@@ -1047,8 +1085,27 @@ namespace AutonomousWebIntelligence.Gaming
                 decision.Priority = 3;
                 decision.Reasoning = "Exploring area";
             }
+            // If no specific action, default to exploration
+            if (decision.Action == GameAction.Move && context.NearbyObjects.Count == 0)
+            {
+                decision.TargetLocation = GenerateExplorationTarget(context);
+                decision.Priority = 2;
+                decision.Reasoning = "No immediate threats or objectives - exploring";
+            }
+            else if (context.InCombat && context.ActiveStrategy != CombatStrategy.None)
+            {
+                decision = await ApplyCombatStrategy(decision, context);
+            }
+            else
+            {
+                decision.Action = GameAction.Move;
+                decision.TargetLocation = GenerateExplorationTarget(context);
+                decision.Priority = 2;
+                decision.Reasoning = "Exploring area for resources or objectives";
+            }
+            
 
-            decision.Confidence = CalculateConfidence(context, decision);
+                decision.Confidence = CalculateConfidence(context, decision);
 
             return decision;
         }
