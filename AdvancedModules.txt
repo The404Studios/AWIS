@@ -1,0 +1,12 @@
+This file will be appended to Program.cs to add:
+- Plugin Architecture (600+ lines)
+- Goal Planning & HTN (800+ lines)
+- Social Intelligence (700+ lines)
+- Episodic Memory (600+ lines)
+- Multi-modal Learning (800+ lines)
+- Decision Making (600+ lines)
+- Advanced Scheduling (500+ lines)
+- Utility Theory (400+ lines)
+- Pattern Recognition (500+ lines)
+- Meta-Learning (500+ lines)
+Total: ~6,000+ lines to be added
