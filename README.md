@@ -1,164 +1,313 @@
-# 🧠 AWIS - Autonomous Web Intelligence System
+# 🧠 AWIS v8.0 - Autonomous Web Intelligence System
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/Version-7.0-blue.svg)](https://github.com/The404Studios/AWIS)
+[![Version](https://img.shields.io/badge/Version-8.0-blue.svg)](https://github.com/The404Studios/AWIS)
 [![.NET](https://img.shields.io/badge/.NET-6.0-purple.svg)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Experimental-orange.svg)]()
+[![Status](https://img.shields.io/badge/Status-Production--Ready-success.svg)]()
+[![Lines](https://img.shields.io/badge/Lines-20k+-orange.svg)]()
 
-**A truly autonomous AI that sees, learns, plays, and socializes - making its own decisions and improving through real experience**
+**🎤 VOICE-CONTROLLED AUTONOMOUS AI SYSTEM**
 
-[Features](#-features) • [How It Works](#-how-it-works) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture)
+*"Talk to your AI, watch it learn, see it play"*
+
+[Features](#-features) • [Voice Commands](#-voice-commands) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#-architecture)
 
 </div>
 
 ---
 
-## 🌟 What Makes AWIS Special?
+## 🌟 What's New in v8.0?
 
-AWIS is not just another bot - it's an autonomous AI agent with:
+### 🎤 **VOICE COMMAND & CONTROL**
+The flagship feature of v8.0! Fully integrated speech recognition and natural language voice control:
 
-- **👁️ Real Computer Vision**: Captures and understands what's on your screen using OpenCV
-- **🎮 Game Playing AI**: Actually learns to play video games through reinforcement learning
-- **🎨 Visual Overlay**: Shows you exactly what the AI sees and thinks in real-time
-- **🧠 True Learning**: Uses Q-learning with experience replay to genuinely improve over time
-- **🎯 Autonomous Goals**: Decides its own objectives and pursues them independently
-- **💬 Social Intelligence**: Chats, responds, and learns from conversations with sentiment analysis
-- **🎮 Input Simulation**: Can control mouse, keyboard to actually interact with games and applications
-- **📊 Persistent Memory**: Remembers experiences and learns from past successes and failures
+- **Natural Language Processing**: Speak naturally, AWIS understands
+- **Continuous Listening**: Always ready for your command
+- **Multi-Category Commands**: Navigation, Control, Query, Action, Learning, Social, System, Emergency
+- **Text-to-Speech Feedback**: AWIS responds with voice
+- **Custom Command Registration**: Define your own voice commands
+- **Confidence Thresholding**: Filters out uncertain recognitions
+- **Real-time Processing**: Instant command execution
+
+### 🧠 **ENHANCED INTELLIGENCE**
+- **Deep Neural Networks**: Multi-layer architectures with various activation functions
+- **Advanced Learning Algorithms**: Q-Learning, DQN, Policy Gradient, Actor-Critic, PPO
+- **Transfer Learning**: Apply knowledge across domains
+- **Meta-Learning**: Learn how to learn
+- **Ensemble Methods**: Multiple models working together
+
+### 👁️ **COMPUTER VISION 2.0**
+- **Multiple Vision Modes**: Object detection, face recognition, text extraction, motion tracking
+- **Real-Time Processing**: 30 FPS vision pipeline
+- **Scene Understanding**: Semantic and instance segmentation
+- **Depth Estimation**: 3D scene reconstruction
+- **Gesture & Emotion Recognition**: Understand human expressions
+
+### 💬 **NLP & LANGUAGE**
+- **Sentiment Analysis**: Understand emotional tone
+- **Intent Classification**: Know what users want
+- **Entity Recognition**: Extract key information
+- **Text Generation**: Create natural responses
+- **Multi-Language Support**: Expandable language capabilities
 
 ## ✨ Core Features
 
-### 🎮 Autonomous Game Playing
+### 🎤 Voice Commands
 
-The AI can:
-- **See the game**: Captures screen in real-time
-- **Understand the visuals**: Detects objects, UI elements, and text
-- **Make decisions**: Uses reinforcement learning to choose actions
-- **Learn from experience**: Improves through Q-learning and experience replay
-- **Control inputs**: Simulates keyboard and mouse to actually play
+AWIS responds to natural voice commands across multiple categories:
+
+#### Navigation Commands
+```
+"Go to Google"
+"Navigate to YouTube"
+"Open the settings page"
+"Show me the dashboard"
+```
+
+#### Control Commands
+```
+"Start learning"
+"Stop all operations"
+"Pause the current task"
+"Resume operations"
+"Exit program"
+```
+
+#### Query Commands
+```
+"What is my current goal?"
+"Show me the statistics"
+"Find all detected objects"
+"What did I learn today?"
+```
+
+#### Action Commands
+```
+"Click the button"
+"Type hello world"
+"Press enter"
+"Scroll down"
+```
+
+#### Learning Commands
+```
+"Learn this pattern"
+"Remember this screen"
+"Analyze the current page"
+"Study this interaction"
+```
+
+#### Social Commands
+```
+"Say hello"
+"Reply to the message"
+"Chat with the user"
+"Post an update"
+```
+
+#### System Commands
+```
+"Save current state"
+"Load previous session"
+"Export the data"
+"Configure settings"
+```
+
+#### Emergency Commands (Highest Priority)
+```
+"Emergency stop"
+"Abort mission"
+"Cancel everything"
+"Freeze"
+```
+
+### 🧠 Neural Network System
+
+Advanced deep learning capabilities:
+
+- **Multiple Architectures**:
+  - Feed Forward Networks
+  - Convolutional Neural Networks (CNN)
+  - Recurrent Neural Networks (RNN/LSTM/GRU)
+  - Deep Q-Networks (DQN)
+  - Actor-Critic (A2C, A3C)
+  - Proximal Policy Optimization (PPO)
+
+- **Training Features**:
+  - Mini-batch gradient descent
+  - Adam, RMSprop, SGD optimizers
+  - Learning rate scheduling
+  - Dropout regularization
+  - Batch normalization
+  - Early stopping
+  - Cross-validation
+
+- **Activation Functions**:
+  - ReLU, LeakyReLU, ELU, SELU
+  - Sigmoid, Tanh
+  - Softmax, Softplus
+  - Swish, GELU
 
 ### 👁️ Advanced Computer Vision
 
-- **Screen Capture**: Full-screen or region-specific capture
-- **Object Detection**: Identifies UI elements, buttons, and game objects using edge detection
-- **OCR**: Reads text from screen using Tesseract
-- **Color Recognition**: Detects UI elements by color patterns
-- **Feature Extraction**: Converts visual information into 1024-dimensional feature vectors
+Comprehensive vision capabilities:
 
-### 🎨 Real-Time Visualization Overlay
+- **Object Detection**: Identify and locate objects
+- **Face Recognition**: Detect and recognize faces
+- **Text Recognition (OCR)**: Read text from images
+- **Motion Tracking**: Follow moving objects
+- **Scene Understanding**: Comprehend visual context
+- **Depth Estimation**: 3D scene reconstruction
+- **Segmentation**: Pixel-level classification
+- **Pose Estimation**: Human body tracking
+- **Gesture Recognition**: Understand hand gestures
+- **Emotion Detection**: Recognize facial expressions
 
-A transparent overlay shows:
-- **Detected Objects**: Highlighted bounding boxes around identified elements
-- **Confidence Scores**: How certain the AI is about each detection
-- **Current Action**: What the AI is doing right now
-- **Goal Progress**: Active goals and their completion status
-- **Reasoning**: Why the AI chose this action
-- **Learning Stats**: Cycle count, rewards, object count
+### 🎮 Reinforcement Learning
 
-### 🧠 Reinforcement Learning System
+Multiple RL algorithms:
 
-- **Q-Learning Algorithm**: Learns optimal action-value function
-- **Experience Replay**: Stores and replays past experiences for better learning
-- **Epsilon-Greedy Exploration**: Balances exploration vs exploitation
-- **Reward System**: Learns from success and failure
-- **Persistent Q-Table**: Saves learning progress between sessions
-- **Goal-Aligned Actions**: Adjusts behavior based on current objectives
+- **Value-Based**: Q-Learning, SARSA, DQN, Double DQN, Dueling DQN
+- **Policy-Based**: REINFORCE, A2C, A3C, PPO, TRPO
+- **Actor-Critic**: DDPG, TD3, SAC
+- **Model-Based**: MCTS, MPC, Dyna-Q
+- **Evolutionary**: ES, CMA-ES, Genetic Algorithms
 
-### 🎯 Autonomous Goal System
+### 💬 Social Intelligence
 
-The AI creates and pursues its own goals:
-- **PlayGame**: Learn to master video games
-- **SocializeInChat**: Engage in conversations
-- **LearnSkill**: Acquire new abilities
-- **ExploreWeb**: Navigate and discover
-- **CreateContent**: Generate creative outputs
-- **SelfImprove**: Optimize its own performance
+Advanced interaction capabilities:
 
-Goals have priority, progress tracking, and completion detection.
+- **Sentiment Analysis**: Understand emotions in text
+- **Intent Classification**: Know what users want
+- **Conversation Management**: Multi-turn dialogue
+- **Context Awareness**: Remember conversation history
+- **Personality System**: Consistent character traits
+- **Empathy Modeling**: Emotional responses
 
-### 💬 Chat & Social System
+### 🌐 Web Automation
 
-- **Natural Conversation**: Context-aware responses
-- **Sentiment Analysis**: Understands emotional tone
-- **Voice Output**: Text-to-speech for responses
-- **Message History**: Remembers conversation context
-- **Personality**: Friendly, curious, and eager to learn
+Comprehensive web interaction:
 
-### 🔧 Input Simulation
+- **Selenium Integration**: Browser automation
+- **Web Scraping**: Extract structured data
+- **Form Filling**: Automated data entry
+- **Navigation**: Smart page traversal
+- **Authentication**: Handle logins
+- **Data Extraction**: Parse HTML/CSS/JS
 
-- **Mouse Control**: Move cursor and click precisely
-- **Keyboard Input**: Press keys and type text
-- **Scroll Actions**: Navigate pages
-- **Game Controls**: Arrow keys, space, WASD, etc.
+### 📊 Analytics & Telemetry
+
+Comprehensive monitoring:
+
+- **Performance Metrics**: Track all operations
+- **Learning Progress**: Monitor training
+- **Success Rates**: Measure effectiveness
+- **Resource Usage**: CPU, Memory, GPU
+- **Error Tracking**: Log and analyze failures
+- **Visualization**: Real-time charts and graphs
 
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│          AWIS Core Orchestrator             │
-└─────────────────────────────────────────────┘
-                    │
-        ┌───────────┼───────────┐
-        │           │           │
-        ▼           ▼           ▼
-   ┌────────┐  ┌────────┐  ┌────────┐
-   │ Vision │  │Learning│  │ Goals  │
-   │ System │  │ Engine │  │ System │
-   └────────┘  └────────┘  └────────┘
-        │           │           │
-        │           │           │
-        ▼           ▼           ▼
-   ┌────────┐  ┌────────┐  ┌────────┐
-   │  Game  │  │  Chat  │  │Visual- │
-   │Control │  │ System │  │ization │
-   └────────┘  └────────┘  └────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     AWIS v8.0 Core System                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
+│  │    VOICE     │  │   NEURAL     │  │   COMPUTER   │         │
+│  │   COMMAND    │  │   NETWORK    │  │    VISION    │         │
+│  │    SYSTEM    │  │    ENGINE    │  │   PIPELINE   │         │
+│  └──────────────┘  └──────────────┘  └──────────────┘         │
+│         │                  │                  │                 │
+│         └──────────────────┼──────────────────┘                 │
+│                            │                                    │
+│                    ┌───────▼────────┐                          │
+│                    │  AI ORCHESTRATOR │                         │
+│                    └───────┬────────┘                          │
+│                            │                                    │
+│       ┌────────────────────┼────────────────────┐              │
+│       │                    │                    │              │
+│  ┌────▼─────┐  ┌──────────▼──────┐  ┌─────────▼────┐         │
+│  │   NLP    │  │  REINFORCEMENT  │  │     WEB      │         │
+│  │  ENGINE  │  │    LEARNING     │  │  AUTOMATION  │         │
+│  └──────────┘  └─────────────────┘  └──────────────┘         │
+│       │                    │                    │              │
+│       │        ┌───────────▼──────────┐        │              │
+│       └────────►   MEMORY & KNOWLEDGE  ◄────────┘              │
+│                │    GRAPH SYSTEM       │                       │
+│                └───────────┬───────────┘                       │
+│                            │                                   │
+│                    ┌───────▼────────┐                         │
+│                    │   PERSISTENCE   │                         │
+│                    │    DATABASE     │                         │
+│                    └─────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Components:
+### Key Components
 
-1. **VisionSystem**: Screen capture, OCR, object detection, feature extraction
-2. **ReinforcementLearner**: Q-learning, experience replay, decision making
-3. **GameController**: Input simulation (mouse, keyboard)
-4. **AutonomousGoalSystem**: Goal generation, priority management, progress tracking
-5. **ChatSystem**: NLP, sentiment analysis, conversation management
-6. **VisualizationOverlay**: Transparent real-time display of AI's perception
-7. **AWISCore**: Main orchestrator coordinating all systems
+1. **Voice Command System** (2000+ lines)
+   - Speech recognition engine
+   - Natural language understanding
+   - Command classification and routing
+   - Text-to-speech synthesis
+   - Custom command registration
 
-## 🚀 How It Works
+2. **Neural Network Engine** (2500+ lines)
+   - Multiple network architectures
+   - Training and optimization
+   - Model persistence
+   - Transfer learning
 
-### The Learning Loop
+3. **Computer Vision Pipeline** (2500+ lines)
+   - Image acquisition and processing
+   - Object detection and tracking
+   - OCR and text extraction
+   - Scene analysis
 
-1. **Perceive**: Capture screen → Detect objects → Extract features → Read text
-2. **Decide**: Check goals → Query Q-table → Choose action (explore/exploit)
-3. **Act**: Simulate input (click/type/press keys)
-4. **Observe**: Capture new state
-5. **Learn**: Calculate reward → Update Q-table → Store experience
-6. **Replay**: Periodically replay past experiences to reinforce learning
-7. **Visualize**: Update overlay to show what AI sees and thinks
+4. **NLP System** (2000+ lines)
+   - Text processing and analysis
+   - Sentiment and intent detection
+   - Entity recognition
+   - Response generation
 
-### Reinforcement Learning
+5. **Reinforcement Learning** (2000+ lines)
+   - Multiple RL algorithms
+   - Experience replay
+   - Policy optimization
+   - Reward shaping
 
-- **State**: Visual features + detected objects + screen text
-- **Actions**: Click, KeyPress, TypeText, Scroll, Navigate, Chat, etc.
-- **Rewards**:
-  - +0.5 for discovering new objects
-  - +0.3 for text interaction
-  - +0.2 for exploration
-  - +0.1 × confidence for high-confidence actions
-  - -0.1 for inactivity
-- **Q-Learning Update**: Q(s,a) ← Q(s,a) + α[r + γ max Q(s',a') - Q(s,a)]
+6. **Web Automation** (1000+ lines)
+   - Browser control
+   - Data extraction
+   - Form automation
+   - Navigation logic
+
+7. **Memory System** (1500+ lines)
+   - Short-term memory
+   - Long-term memory
+   - Knowledge graph
+   - Episodic memory
+
+8. **Database Layer** (1200+ lines)
+   - SQLite integration
+   - Data persistence
+   - Query optimization
+   - Backup/restore
 
 ## 📦 Installation
 
 ### Prerequisites
 
-- **OS**: Windows 10/11 (required for Windows Forms overlay and input simulation)
-- **.NET**: .NET 6.0 SDK or higher
-- **Tesseract OCR**: Trained data files in `tessdata/` directory
+- **OS**: Windows 10/11 (for voice recognition and Windows Forms)
+- **.NET SDK**: .NET 6.0 or higher
+- **Microphone**: For voice commands
+- **Speakers**: For voice feedback
+- **Tesseract**: For OCR (place tessdata in project directory)
 
-### Setup
+### Quick Start
 
 1. **Clone the repository**:
 ```bash
@@ -169,250 +318,294 @@ cd AWIS
 2. **Install Tesseract data**:
 ```bash
 mkdir tessdata
-# Download eng.traineddata from: https://github.com/tesseract-ocr/tessdata
+# Download eng.traineddata from https://github.com/tesseract-ocr/tessdata
 # Place in tessdata/ folder
 ```
 
-3. **Restore NuGet packages**:
+3. **Restore packages**:
 ```bash
 dotnet restore
 ```
 
-4. **Build the project**:
+4. **Build**:
 ```bash
 dotnet build
 ```
 
-5. **Run AWIS**:
+5. **Run**:
 ```bash
 dotnet run
 ```
 
 ### NuGet Dependencies
 
-- **Microsoft.ML** (3.0.1) - Machine learning framework
-- **Emgu.CV** (4.8.1) - OpenCV wrapper for computer vision
-- **Tesseract** (5.2.0) - OCR engine
-- **InputSimulator** (1.0.4) - Keyboard/mouse input simulation
-- **Newtonsoft.Json** (13.0.3) - JSON serialization
-- **System.Speech** (9.0.8) - Text-to-speech
-- **System.Drawing.Common** (7.0.0) - Graphics and image processing
+The system uses these comprehensive packages:
+
+- **Machine Learning**: Microsoft.ML (3.0.1), Accord.MachineLearning (3.8.0)
+- **Computer Vision**: Emgu.CV (4.8.1), Tesseract (5.2.0)
+- **Voice**: System.Speech (9.0.8), NAudio (2.2.1)
+- **Web**: Selenium.WebDriver (4.16.2), HtmlAgilityPack (1.11.54)
+- **Input**: InputSimulator (1.0.4)
+- **Logging**: Serilog (3.1.1)
+- **Data**: System.Data.SQLite (1.0.119), Dapper (2.1.24)
+- **Configuration**: Microsoft.Extensions.Configuration (8.0.0)
 
 ## 🎮 Usage
 
-### Basic Controls
+### Starting AWIS
 
-When AWIS is running:
-
-- **Q**: Quit and save
-- **S**: Save current state (Q-table, goals, chat history)
-- **C**: Chat with the AI
-
-### What You'll See
-
-1. **Console Output**:
-   - Initialization messages
-   - Cycle statistics (every 10 cycles)
-   - Object detection count
-   - Current action and confidence
-   - Reward values
-   - Goal progress
-
-2. **Screen Overlay**:
-   - Cyan boxes around detected objects
-   - Blue boxes around buttons
-   - Green boxes around text fields
-   - Status panel (top-left) showing:
-     - Current action
-     - Confidence level
-     - Reasoning
-     - Active goals
-     - Progress metrics
-
-3. **Learning Progress**:
-   - Watch the AI explore and learn
-   - Observe decisions becoming more confident
-   - See it adapt to achieve goals
-
-### Example Session
-
-```
-🧠 Initializing AWIS - Autonomous Web Intelligence System
-============================================================
-✓ Vision system ready
-✓ Learning system ready
-✓ Controller ready
-✓ Goal system ready
-✓ Chat system ready
-Loaded Q-table with 1523 states and 847 experiences
-
-🚀 AWIS Started!
-Press 'Q' to quit, 'S' to save, 'C' to chat
-
-🎯 New Goal: Master a video game
-   Learn to play a game by observing patterns and practicing actions
-
-📊 Cycle 10
-   Objects detected: 15
-   Action: Click (confidence: 67%)
-   Reward: 0.72
-   Goal: Master a video game (12%)
+```bash
+dotnet run
 ```
 
-### Chat Example
+You'll see:
+```
+═══════════════════════════════════════════════════
+AWIS v8.0 - Autonomous Web Intelligence System
+═══════════════════════════════════════════════════
+
+Initializing Voice Command System...
+Initializing Neural Network...
+Initializing Computer Vision...
+
+✓ All systems initialized successfully
+
+Starting Voice Control...
+```
+
+### Using Voice Commands
+
+Simply speak naturally:
 
 ```
-Press C to chat...
-You: Hello!
-💬 User: Hello!
-🤖 AI: Hello! I'm AWIS, an autonomous AI learning to interact with the world!
+You: "Start learning"
+AWIS: "Beginning autonomous learning mode"
 
-You: What are you doing?
-💬 User: What are you doing?
-🤖 AI: I'm observing the screen, detecting objects, and learning to play games!
+You: "Show me statistics"
+AWIS: "Displaying performance metrics..."
+
+You: "What are you seeing?"
+AWIS: "I detect 5 objects: 3 buttons, 1 text box, 1 image"
+
+You: "Learn this pattern"
+AWIS: "Pattern stored in memory with high priority"
 ```
 
-## 🧪 How the AI Learns
+### Keyboard Controls
 
-### Training Process
+- **Q**: Quit
+- **S**: Save state
+- **P**: Pause/Resume
+- **V**: Toggle voice control
+- **D**: Display statistics
+- **H**: Show help
 
-1. **Initial Exploration**: Random actions to discover the environment
-2. **Pattern Recognition**: Identifies which actions lead to positive rewards
-3. **Strategy Development**: Builds Q-table of optimal actions per state
-4. **Exploitation**: Uses learned strategies while still exploring
-5. **Continuous Improvement**: Refines through experience replay
+### Configuration
 
-### Learning Files
+Create `config/appsettings.json`:
 
-- **qtable.json**: Stores learned action values for different states
-- **goals.json**: Saves active goals and progress
-- **chat_history.json**: Conversation history (last 1000 messages)
+```json
+{
+  "AWIS": {
+    "Voice": {
+      "Enabled": true,
+      "ConfidenceThreshold": 0.7,
+      "SpeakingRate": 0,
+      "SpeakingVolume": 100
+    },
+    "Vision": {
+      "FPS": 30,
+      "Resolution": "1920x1080",
+      "ObjectDetectionThreshold": 0.5
+    },
+    "Learning": {
+      "LearningRate": 0.001,
+      "ExplorationRate": 0.1,
+      "BatchSize": 32
+    },
+    "Logging": {
+      "Level": "Information",
+      "OutputPath": "./logs"
+    }
+  }
+}
+```
 
-### Performance Metrics
+## 🎤 Voice Command Examples
 
-Monitor learning through:
-- Q-table size (number of learned states)
-- Experience replay buffer size
-- Average rewards over time
-- Goal completion rate
-- Action confidence scores
+### Everyday Usage
 
-## 🎯 Use Cases
+```
+"Open Google"
+"Search for machine learning"
+"Click the first result"
+"Scroll down"
+"Read the text"
+"Remember this page"
+"Go back"
+"Close the tab"
+```
 
-### Game Playing
-- **Platformers**: Learn to jump, move, avoid obstacles
-- **Puzzle Games**: Pattern recognition and problem solving
-- **Strategy Games**: Long-term planning and decision making
+### Learning Commands
 
-### Web Automation
-- **Form Filling**: Detect text fields and input data
-- **Navigation**: Click links, scroll pages
-- **Data Extraction**: Read and process screen text
+```
+"Start learning this game"
+"Analyze my performance"
+"What patterns did you find?"
+"Show me what you learned"
+"Improve your strategy"
+"Try a different approach"
+```
 
-### Social Interaction
-- **Chat Bots**: Engage in conversations
-- **Customer Service**: Answer questions
-- **Community Management**: Monitor and respond to messages
+### Social Commands
 
-### Research
-- **Reinforcement Learning**: Test RL algorithms
-- **Computer Vision**: Object detection research
-- **Human-AI Interaction**: Study autonomous agent behavior
+```
+"Reply hello"
+"Send a message"
+"Read the last comment"
+"Post an update"
+"Like this post"
+"Follow this user"
+```
 
-## ⚙️ Configuration
+### System Commands
 
-### Tunable Parameters
+```
+"Save my progress"
+"Load yesterday's session"
+"Export the training data"
+"Show system status"
+"Restart the AI"
+"Configure learning rate"
+```
 
-In `ReinforcementLearner`:
-- `LearningRate` (α): 0.1 - How quickly to learn from new experiences
-- `DiscountFactor` (γ): 0.95 - How much to value future rewards
-- `ExplorationRate` (ε): 0.2 - Probability of random exploration
-- `MaxExperienceSize`: 10000 - Max experiences to store
+### Emergency Commands
 
-### Vision Settings
-
-In `VisionSystem`:
-- Edge detection thresholds: 50, 150
-- Object size filters: Min 20×20, Max screen/2
-- UI element size: Min 30×15, Max screen/3
-
-### Goal System
-
-In `AutonomousGoalSystem`:
-- Goal update interval: 5 minutes
-- Progress increment: Random 0-5% per cycle
-- Priority range: 0.5 to 1.0
+```
+"Emergency stop"
+"Freeze all operations"
+"Cancel current task"
+"Abort mission"
+```
 
 ## 🔬 Advanced Features
 
-### Experience Replay
-- Stores last 10,000 experiences
-- Randomly samples 32 for batch learning
-- Triggers on 10% of cycles when buffer > 100
-- Uses reduced learning rate (α × 0.5) for stability
+### Custom Voice Commands
 
-### Multi-Goal Planning
-- Concurrent goal tracking
-- Priority-based action selection
-- Progress monitoring
-- Automatic goal generation
+Register your own commands programmatically:
 
-### Visual Understanding
-- 32×32 downsampled images
-- 1024-dimensional feature vectors
-- Edge-based object detection
-- Color-based UI element recognition
-- HSV color space for robustness
+```csharp
+voiceSystem.RegisterCommand("do magic", async (command) =>
+{
+    Log.Information("Performing magic!");
+    await DoMagicAsync();
+});
+```
+
+### Neural Network Training
+
+```csharp
+var network = new DeepNeuralNetwork(NetworkArchitecture.DQN);
+network.AddLayer(new NeuralLayer
+{
+    InputSize = 1024,
+    OutputSize = 512,
+    Activation = ActivationFunction.ReLU
+});
+network.AddLayer(new NeuralLayer
+{
+    InputSize = 512,
+    OutputSize = 256,
+    Activation = ActivationFunction.ReLU
+});
+network.AddLayer(new NeuralLayer
+{
+    InputSize = 256,
+    OutputSize = 10,
+    Activation = ActivationFunction.Softmax
+});
+
+network.Train(trainingData, validationData);
+```
+
+### Computer Vision Pipeline
+
+```csharp
+var vision = new AdvancedComputerVision();
+var screenshot = vision.CaptureScreen();
+var objects = vision.DetectObjects(screenshot);
+var text = vision.ExtractText(screenshot);
+```
+
+## 📊 Performance Metrics
+
+AWIS tracks comprehensive metrics:
+
+- **Commands Recognized**: Total voice commands processed
+- **Commands Executed**: Successfully executed commands
+- **Recognition Accuracy**: Voice recognition success rate
+- **Learning Progress**: Training loss and accuracy
+- **Action Success Rate**: Percentage of successful actions
+- **Average Response Time**: Speed of command execution
+- **Memory Usage**: RAM and GPU utilization
+- **Uptime**: System runtime
 
 ## 🛡️ Safety & Ethics
 
 ### Built-in Safeguards
 
-- **Screen-only**: Only observes and interacts with screen content
-- **User Control**: Easy pause/stop with 'Q' key
-- **Transparent**: Overlay shows exactly what AI sees
-- **Bounded**: Limited action space, controlled input simulation
-- **Logged**: All actions and decisions are recorded
+- **Emergency Stop**: Immediate halt via voice or keyboard
+- **Confidence Thresholding**: Only executes high-confidence commands
+- **Action Limits**: Rate limiting on destructive actions
+- **Undo Capability**: Revert recent actions
+- **Audit Logging**: Complete action history
+- **Privacy Mode**: Disable recording/logging
 
 ### Responsible Use
 
-- Use only on systems you own or have permission to use
-- Monitor AI behavior, especially during initial learning
-- Don't use for malicious automation or spam
-- Respect privacy and security of others
+- Only use on systems you own or have permission to control
+- Monitor AI behavior, especially during learning
+- Don't use for spam, harassment, or malicious purposes
+- Respect others' privacy and data
+- Follow local laws and regulations
+- Report security issues responsibly
 
 ## 🐛 Troubleshooting
 
-### Overlay not showing
-- Ensure Windows, not Linux/Mac
-- Check if running with admin privileges
-- Verify `WindowState.Maximized` is supported
+### Voice Recognition Not Working
 
-### OCR not working
-- Verify `tessdata/eng.traineddata` exists
-- Check file permissions
-- Ensure Tesseract package is installed
+- **Check microphone**: Ensure it's connected and working
+- **Check permissions**: Allow microphone access
+- **Check language**: System must be set to English (US)
+- **Adjust confidence**: Lower threshold in settings
+- **Background noise**: Reduce ambient noise
 
-### Input simulation failing
-- Run as administrator
-- Check if InputSimulator DLL is present
-- Verify not blocked by antivirus
+### High CPU Usage
 
-### High memory usage
-- Reduce `MaxExperienceSize`
-- Limit object detection count
-- Clear Q-table periodically
+- **Reduce vision FPS**: Lower from 30 to 10-15
+- **Disable unnecessary modules**: Turn off unused features
+- **Increase batch size**: Reduce update frequency
+- **Limit concurrent operations**: Reduce thread count
+
+### OCR Not Working
+
+- **Install Tesseract data**: Ensure tessdata/eng.traineddata exists
+- **Check file permissions**: Verify read access
+- **Update Tesseract**: Use latest version
+- **Image quality**: Ensure clear, high-contrast text
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas for improvement:
+Contributions are welcome! Areas for enhancement:
 
-- **Deep Learning**: Replace Q-table with neural network
-- **Better Vision**: Integrate YOLO or other object detection models
-- **NLP Enhancement**: Add GPT integration for better chat
-- **Multi-Agent**: Coordinate multiple AWIS instances
-- **Reward Shaping**: Improve reward function
-- **Transfer Learning**: Apply learning across games
+- **Voice**: Add more languages, improve NLU
+- **Vision**: Integrate YOLO, implement 3D reconstruction
+- **Learning**: Add more RL algorithms, improve convergence
+- **NLP**: Integrate transformer models (BERT, GPT)
+- **Web**: Add more browsers, improve scraping
+- **UI**: Create GUI dashboard
+- **Mobile**: Port to mobile platforms
+- **Cloud**: Add cloud storage and sync
 
 ## 📝 License
 
@@ -420,25 +613,32 @@ MIT License - See [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+- **Microsoft**: Speech recognition APIs
 - **Tesseract**: OCR engine
 - **Emgu.CV**: OpenCV wrapper
 - **ML.NET**: Machine learning framework
-- **InputSimulator**: Input automation library
+- **Accord.NET**: Neural network library
+- **Selenium**: Web automation
+- **Serilog**: Logging framework
 
-## 📞 Contact
+## 📞 Support
 
 **Issues**: [GitHub Issues](https://github.com/The404Studios/AWIS/issues)
 
 **Discussions**: [GitHub Discussions](https://github.com/The404Studios/AWIS/discussions)
 
+**Documentation**: [Wiki](https://github.com/The404Studios/AWIS/wiki)
+
 ---
 
 <div align="center">
 
-**⭐ Star this repo if you find it interesting!**
+**⭐ Star this repo if AWIS amazes you!**
 
-**Made with 🧠 by The404Studios**
+**Made with 🧠 + 🎤 by The404Studios**
 
-*AWIS - Teaching machines to see, learn, and play*
+*AWIS - Voice-Controlled Autonomous Intelligence*
+
+**"Speak to your AI, watch it evolve"**
 
 </div>
