@@ -185,7 +185,7 @@ public class CapabilityManager
 /// </summary>
 public class PolicyEngine
 {
-    private readonly List<Policy> _policies = new ConcurrentDictionary<string, CapabilityToken>();
+    private readonly List<Policy> _policies = new List<Policy>();
     private readonly ICorrelatedLogger _logger;
     private readonly IMetricsCollector _metrics;
 
@@ -382,7 +382,7 @@ public class Policy
     public string[] Actions { get; set; } = Array.Empty<string>();
     public string[]? Principals { get; set; }
     public string[]? Resources { get; set; }
-    public Dictionary<string, object> Conditions { get; set; } = new ConcurrentDictionary<string, CapabilityToken>();
+    public Dictionary<string, object> Conditions { get; set; } = new Dictionary<string, object>();
     public int Priority { get; set; } = 0;
 
     public bool Matches(PolicyRequest request)
@@ -442,7 +442,7 @@ public class PolicyRequest
     public string Action { get; set; } = string.Empty;
     public string Principal { get; set; } = string.Empty;
     public string? Resource { get; set; }
-    public Dictionary<string, object> Context { get; set; } = new ConcurrentDictionary<string, CapabilityToken>();
+    public Dictionary<string, object> Context { get; set; } = new Dictionary<string, object>();
 }
 
 /// <summary>
@@ -461,8 +461,8 @@ public class PolicyResult
 /// </summary>
 public class WebAutomationGuardrails
 {
-    private readonly HashSet<string> _allowedDomains = new ConcurrentDictionary<string, CapabilityToken>();
-    private readonly Dictionary<string, RateLimiter> _rateLimiters = new ConcurrentDictionary<string, CapabilityToken>();
+    private readonly HashSet<string> _allowedDomains = new HashSet<string>();
+    private readonly Dictionary<string, RateLimiter> _rateLimiters = new Dictionary<string, RateLimiter>();
     private readonly ICorrelatedLogger _logger;
     private readonly PolicyEngine _policyEngine;
 
@@ -611,8 +611,8 @@ public class RateLimiter
 {
     private readonly int _maxRequests;
     private readonly TimeSpan _window;
-    private readonly Queue<DateTime> _timestamps = new ConcurrentDictionary<string, CapabilityToken>();
-    private readonly object _lock = new ConcurrentDictionary<string, CapabilityToken>();
+    private readonly Queue<DateTime> _timestamps = new Queue<DateTime>();
+    private readonly object _lock = new object();
 
     public RateLimiter(int maxRequests, TimeSpan window)
     {

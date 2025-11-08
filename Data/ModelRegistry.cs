@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -29,7 +29,7 @@ public class ModelRegistry
 
     public async Task InitializeAsync()
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         await connection.ExecuteAsync(@"
@@ -106,7 +106,7 @@ public class ModelRegistry
             datasetHash = await ComputeFileHashAsync(registration.DatasetPath);
         }
 
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         await connection.ExecuteAsync(@"
@@ -178,7 +178,7 @@ public class ModelRegistry
     /// </summary>
     public async Task<ModelRecord?> GetModelAsync(string modelId)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var record = await connection.QueryFirstOrDefaultAsync<ModelRecordDto>(@"
             SELECT * FROM model_registry WHERE model_id = @ModelId",
@@ -192,7 +192,7 @@ public class ModelRegistry
     /// </summary>
     public async Task<ModelRecord?> GetLatestModelAsync(string modelName)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var record = await connection.QueryFirstOrDefaultAsync<ModelRecordDto>(@"
             SELECT * FROM model_registry
@@ -209,7 +209,7 @@ public class ModelRegistry
     /// </summary>
     public async Task<IEnumerable<ModelRecord>> ListModelsAsync(string? nameFilter = null)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var query = "SELECT * FROM model_registry WHERE status = 'active'";
         if (!string.IsNullOrEmpty(nameFilter))
@@ -232,7 +232,7 @@ public class ModelRegistry
         double metricValue,
         string? datasetName = null)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         await connection.ExecuteAsync(@"
             INSERT INTO model_quality_metrics (model_id, metric_type, metric_value, measured_at, dataset_name)
@@ -252,7 +252,7 @@ public class ModelRegistry
     /// </summary>
     public async Task<bool> DetectDriftAsync(string modelId, string metricType, double threshold, int days = 7)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var cutoff = DateTime.UtcNow.AddDays(-days).ToString("O");
 
