@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using AWIS.Core;
 using AWIS.NLP;
+using AWIS.MachineLearning;
 
 namespace AWIS
 {
@@ -43,6 +44,10 @@ namespace AWIS
             else if (args.Length > 0 && args[0] == "--benchmark")
             {
                 await RunBenchmarkAsync();
+            }
+            else if (args.Length > 0 && args[0] == "--ml-demo")
+            {
+                RunMLDemos();
             }
             else
             {
@@ -142,6 +147,7 @@ namespace AWIS
             Console.ResetColor();
             Console.WriteLine("  dotnet run --demo           Run parallel processing demonstration");
             Console.WriteLine("  dotnet run --full-demo      Run complete system demonstration");
+            Console.WriteLine("  dotnet run --ml-demo        Run machine learning demonstrations");
             Console.WriteLine("  dotnet run --test-tokenizer Test tokenizer with compression");
             Console.WriteLine("  dotnet run --benchmark      Run performance benchmark");
             Console.WriteLine();
@@ -349,6 +355,127 @@ namespace AWIS
                 result = Math.Sqrt(result + 1);
             }
             return (int)result;
+        }
+
+        static void RunMLDemos()
+        {
+            Console.WriteLine("=== Machine Learning Demonstrations ===\n");
+
+            // Demo 1: Neural Network
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("1. Deep Neural Network Training:");
+            Console.ResetColor();
+            var nn = new DeepNeuralNetwork();
+            nn.AddLayer(2, 4, "relu");
+            nn.AddLayer(4, 1, "sigmoid");
+
+            var X = new double[][] {
+                new double[] { 0, 0 },
+                new double[] { 0, 1 },
+                new double[] { 1, 0 },
+                new double[] { 1, 1 }
+            };
+            var y = new double[][] {
+                new double[] { 0 },
+                new double[] { 1 },
+                new double[] { 1 },
+                new double[] { 0 }
+            };
+
+            nn.Train(X, y, epochs: 50);
+            Console.WriteLine("Predictions:");
+            foreach (var input in X)
+            {
+                var pred = nn.Predict(input);
+                Console.WriteLine($"  Input: [{input[0]}, {input[1]}] -> Output: {pred[0]:F3}");
+            }
+            Console.WriteLine();
+
+            // Demo 2: K-Means Clustering
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("2. K-Means Clustering:");
+            Console.ResetColor();
+            var random = new Random();
+            var clusterData = Enumerable.Range(0, 100).Select(_ =>
+                new double[] { random.NextDouble() * 10, random.NextDouble() * 10 }
+            ).ToArray();
+
+            var kmeans = new KMeans(k: 3);
+            var labels = kmeans.Fit(clusterData);
+            Console.WriteLine($"  Clustered {clusterData.Length} points into 3 clusters");
+            Console.WriteLine($"  Cluster distribution:");
+            for (int i = 0; i < 3; i++)
+                Console.WriteLine($"    Cluster {i}: {labels.Count(l => l == i)} points");
+            Console.WriteLine();
+
+            // Demo 3: Q-Learning
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("3. Q-Learning Agent:");
+            Console.ResetColor();
+            var qAgent = new QLearningAgent(learningRate: 0.1, discountFactor: 0.9, explorationRate: 0.2);
+
+            Console.WriteLine("  Training for 100 episodes...");
+            for (int episode = 0; episode < 100; episode++)
+            {
+                string state = "start";
+                for (int step = 0; step < 10; step++)
+                {
+                    int action = qAgent.ChooseAction(state, numActions: 4);
+                    double reward = random.NextDouble();
+                    string nextState = $"state_{action}";
+                    qAgent.Learn(state, action, reward, nextState, numActions: 4);
+                    state = nextState;
+                }
+            }
+            Console.WriteLine("  Training complete! Q-table has " + qAgent.GetQTable().Count + " states learned.");
+            Console.WriteLine();
+
+            // Demo 4: Linear Regression
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("4. Linear Regression:");
+            Console.ResetColor();
+            var lr = new LinearRegression();
+            var X_lr = Enumerable.Range(0, 20).Select(i => new double[] { i }).ToArray();
+            var y_lr = X_lr.Select(x => 2 * x[0] + 3 + (random.NextDouble() - 0.5)).ToArray();
+
+            lr.Fit(X_lr, y_lr, epochs: 100, learningRate: 0.01);
+            Console.WriteLine("  Fitted line to noisy data");
+            Console.WriteLine($"  Sample predictions:");
+            for (int i = 0; i < 5; i++)
+            {
+                var test = new double[] { i * 4 };
+                Console.WriteLine($"    X={test[0]:F0} -> Y={lr.Predict(test):F2} (true: {2 * test[0] + 3:F2})");
+            }
+            Console.WriteLine();
+
+            // Demo 5: Decision Tree
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("5. Decision Tree Classification:");
+            Console.ResetColor();
+            var dt = new DecisionTree(maxDepth: 5);
+            var X_dt = new double[100][];
+            var y_dt = new int[100];
+            for (int i = 0; i < 100; i++)
+            {
+                X_dt[i] = new double[] { random.NextDouble() * 10, random.NextDouble() * 10 };
+                y_dt[i] = X_dt[i][0] + X_dt[i][1] > 10 ? 1 : 0;
+            }
+
+            dt.Train(X_dt, y_dt);
+            int correct = 0;
+            for (int i = 0; i < 20; i++)
+            {
+                var test = new double[] { random.NextDouble() * 10, random.NextDouble() * 10 };
+                var pred = dt.Predict(test);
+                var actual = test[0] + test[1] > 10 ? 1 : 0;
+                if (pred == actual) correct++;
+            }
+            Console.WriteLine($"  Accuracy on test set: {correct / 20.0:P0}");
+            Console.WriteLine();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("✓ All ML demos completed successfully!");
+            Console.ResetColor();
         }
     }
 }
