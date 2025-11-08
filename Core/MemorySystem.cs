@@ -63,8 +63,11 @@ namespace AWIS.Core
     /// <summary>
     /// Hierarchical memory architecture with different memory types
     /// </summary>
-    public class MemoryArchitecture
+    public class MemoryArchitecture : IMemorySystem
     {
+        public string Name => "MemoryArchitecture";
+        public bool IsInitialized { get; private set; }
+
         private readonly Dictionary<MemoryType, List<MemoryItem>> memoryStores = new();
         private readonly Dictionary<Guid, MemoryItem> memoryIndex = new();
         private readonly int shortTermCapacity = 100;
@@ -298,6 +301,83 @@ namespace AWIS.Core
                     .ToList();
             }
             return new List<MemoryItem>();
+        }
+
+        // IMemorySystem implementation
+        public Task InitializeAsync()
+        {
+            IsInitialized = true;
+            return Task.CompletedTask;
+        }
+
+        public Task ShutdownAsync()
+        {
+            IsInitialized = false;
+            return Task.CompletedTask;
+        }
+
+        public Task<HealthStatus> GetHealthAsync()
+        {
+            var stats = GetStatistics();
+            return Task.FromResult(new HealthStatus
+            {
+                IsHealthy = IsInitialized,
+                Status = IsInitialized ? "Operational" : "Not Initialized",
+                Metrics = new Dictionary<string, object>
+                {
+                    ["TotalMemories"] = stats.TotalMemories,
+                    ["ShortTermCount"] = stats.ShortTermCount,
+                    ["LongTermCount"] = stats.LongTermCount
+                }
+            });
+        }
+
+        public Task StoreAsync(string content, MemoryType type, double importance = 0.5)
+        {
+            Store(content, type, importance);
+            return Task.CompletedTask;
+        }
+
+        public Task<Memory?> RecallAsync(string query, MemoryType? type = null)
+        {
+            var item = Recall(query, type);
+            if (item == null) return Task.FromResult<Memory?>(null);
+
+            return Task.FromResult<Memory?>(new Memory
+            {
+                Id = item.Id.ToString(),
+                Content = item.Content,
+                Type = item.Type,
+                Importance = item.Importance,
+                Strength = item.Strength,
+                CreatedAt = item.Timestamp,
+                LastAccessedAt = item.LastAccessed,
+                AccessCount = item.AccessCount
+            });
+        }
+
+        public Task<IEnumerable<Memory>> RecallMultipleAsync(string query, int limit = 10, MemoryType? type = null)
+        {
+            var items = RecallMultiple(query, type, limit);
+            var memories = items.Select(item => new Memory
+            {
+                Id = item.Id.ToString(),
+                Content = item.Content,
+                Type = item.Type,
+                Importance = item.Importance,
+                Strength = item.Strength,
+                CreatedAt = item.Timestamp,
+                LastAccessedAt = item.LastAccessed,
+                AccessCount = item.AccessCount
+            });
+
+            return Task.FromResult(memories);
+        }
+
+        public Task ConsolidateAsync()
+        {
+            Consolidate();
+            return Task.CompletedTask;
         }
     }
 
