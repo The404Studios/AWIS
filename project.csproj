@@ -49,11 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Exclude monolithic backup file from compilation -->
-    <Compile Remove="Program.Monolithic.cs" />
-    <None Include="Program.Monolithic.cs" />
-
-    <!-- Exclude humanization module if it has errors -->
+    <!-- Exclude humanization module -->
     <Compile Remove="Humanization\**" />
     <None Include="Humanization\**" />
   </ItemGroup>
