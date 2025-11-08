@@ -32,6 +32,10 @@ namespace AWIS
             {
                 await RunDemonstrationAsync();
             }
+            else if (args.Length > 0 && args[0] == "--full-demo")
+            {
+                await SystemDemo.RunFullSystemDemo();
+            }
             else if (args.Length > 0 && args[0] == "--test-tokenizer")
             {
                 TestTokenizer();
@@ -136,7 +140,8 @@ namespace AWIS
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("\nUsage:");
             Console.ResetColor();
-            Console.WriteLine("  dotnet run --demo           Run demonstration");
+            Console.WriteLine("  dotnet run --demo           Run parallel processing demonstration");
+            Console.WriteLine("  dotnet run --full-demo      Run complete system demonstration");
             Console.WriteLine("  dotnet run --test-tokenizer Test tokenizer with compression");
             Console.WriteLine("  dotnet run --benchmark      Run performance benchmark");
             Console.WriteLine();
