@@ -10,13 +10,20 @@ AWIS (Advanced AI System) v8.0 is a comprehensive artificial intelligence framew
 AWIS/
 ├── Core/
 │   ├── Program.cs                    # Main entry point with menu system
-│   └── ParallelCoordinator.cs        # Parallel processing infrastructure
+│   ├── ParallelCoordinator.cs        # Parallel processing infrastructure
+│   └── ContextualCommandDemo.cs      # Contextual voice command demos
 ├── NLP/
-│   └── Tokenizer.cs                  # Tokenizers with compression
-│       ├── BPETokenizer              # Byte-Pair Encoding
-│       ├── WordPieceTokenizer        # WordPiece tokenization
-│       ├── CompressedTokenizer       # Huffman coding compression
-│       └── SentencePieceTokenizer    # SentencePiece-style tokenization
+│   ├── Tokenizer.cs                  # Tokenizers with compression
+│   │   ├── BPETokenizer              # Byte-Pair Encoding
+│   │   ├── WordPieceTokenizer        # WordPiece tokenization
+│   │   ├── CompressedTokenizer       # Huffman coding compression
+│   │   └── SentencePieceTokenizer    # SentencePiece-style tokenization
+│   └── ContextualCommands.cs         # Contextual voice command system
+│       ├── ContextualVoiceCommandSystem
+│       ├── SpatialReferenceParser    # Screen zone detection
+│       ├── ColorDetector             # Color-based targeting
+│       ├── ActionMapper              # Natural language to actions
+│       └── ScreenContextAnalyzer     # Visual context analysis
 ├── NeuralNetworks/
 │   ├── Transformers.cs               # Transformer architecture
 │   ├── RNN.cs                        # LSTM, GRU, Bidirectional RNN
@@ -179,7 +186,149 @@ monitor.PrintStatistics();
 - Operation counts
 - Performance statistics
 
-### 3. Complete AI/ML System Suite
+### 3. Contextual Voice Command System
+
+#### Overview
+Natural language voice command interface with spatial awareness, color detection, action chaining, and game control support.
+
+#### ContextualVoiceCommandSystem
+```csharp
+var commandSystem = new ContextualVoiceCommandSystem();
+
+// Parse and execute voice commands
+var actions = commandSystem.ParseCommand("on the left side click the red button");
+commandSystem.ExecuteCommand("move forward and jump");
+```
+
+**Features:**
+- Natural language parsing
+- Multi-action command chaining
+- Screen capture integration
+- Contextual understanding
+
+#### Spatial Reference Parsing
+**Supported Screen Zones:**
+- Left, Right, Top, Bottom, Center
+- TopLeft, TopRight, BottomLeft, BottomRight
+
+**Example Commands:**
+```csharp
+"on the left side of the screen click the button"
+"in the top right corner find the icon"
+"select the item in the center"
+"click on the bottom of the screen"
+```
+
+**Pattern Recognition:**
+- "left side", "left part", "left of the screen"
+- "top right corner", "upper right"
+- "center", "middle", "central area"
+
+#### Color Detection
+**20+ Supported Colors:**
+- Primary: Red, Green, Blue
+- Secondary: Yellow, Orange, Purple, Pink
+- Advanced: Cyan, Magenta, Turquoise, Lime, Indigo
+- Grayscale: White, Black, Gray, Silver
+- And more...
+
+**Example Commands:**
+```csharp
+"click on the red apple"
+"select the blue button"
+"find the green icon and click it"
+"on the left side click the yellow star"
+```
+
+**Features:**
+- RGB color matching with tolerance
+- Target object extraction
+- Multi-color support in single command
+
+#### Action Chaining
+**Supported Conjunctions:**
+- "and", "then", "after that"
+
+**Example Commands:**
+```csharp
+"click on that reply and tell them what you think"
+"open the menu and select settings"
+"find the file and then open it"
+"scroll down and click the submit button"
+```
+
+**Action Types:**
+- Click, DoubleClick
+- Type, Press
+- Move, Scroll
+- Drag, Drop
+
+#### Game Control Mapping
+**Movement Controls:**
+```csharp
+"move forward"   → W key
+"move backward"  → S key
+"move left"      → A key
+"move right"     → D key
+"jump"           → Space key
+"crouch"         → C key
+```
+
+**Example Commands:**
+```csharp
+"move forward"
+"hey, move backward!"
+"turn left"
+"jump"
+"move forward and jump"
+```
+
+**Features:**
+- Filler word tolerance ("hey", "please", "now")
+- Natural variations ("backward", "back", "backwards")
+- Action combinations
+
+#### Screen Context Analysis
+```csharp
+var analyzer = new ScreenContextAnalyzer();
+
+// Find targets based on spatial and color context
+var screen = CaptureScreen();
+var target = analyzer.FindTarget(
+    screen,
+    spatialContext,  // Left zone
+    colorContext,    // Red color
+    "button"         // Target object
+);
+
+Console.WriteLine($"Found at ({target.X}, {target.Y})");
+```
+
+**Features:**
+- Spatial zone filtering
+- Color-based target detection
+- Object type matching
+- Region size estimation
+
+#### Usage Example
+```csharp
+var demo = new ContextualCommandDemo();
+
+// Run full demonstration
+demo.RunDemo();
+
+// Test with screen capture
+demo.TestWithScreenCapture();
+```
+
+**Demo Modes:**
+1. Spatial References - Zone-based commands
+2. Color Detection - Color-based targeting
+3. Action Chaining - Multi-step commands
+4. Game Controls - WASD movement
+5. Complex Commands - Combined contexts
+
+### 4. Complete AI/ML System Suite
 
 #### Neural Networks (10,000+ lines)
 - Transformers with multi-head attention
@@ -279,6 +428,15 @@ Demonstrates all 4 tokenizers with compression metrics.
 dotnet run --benchmark
 ```
 Compares sequential vs. parallel vs. batch processing performance.
+
+### Test Contextual Voice Commands
+```csharp
+using AWIS.Core;
+
+var demo = new ContextualCommandDemo();
+demo.RunDemo();  // Shows all command types with examples
+```
+Demonstrates spatial references, color detection, action chaining, and game controls.
 
 ### Interactive Menu
 ```bash
