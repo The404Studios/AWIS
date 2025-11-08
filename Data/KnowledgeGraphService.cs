@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using AWIS.Core;
 
-namespace AWIS.Data;
+namespace AWIS.Data
+{
 
 /// <summary>
 /// Persistent knowledge graph backed by SQLite with advanced inference
@@ -29,7 +30,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
 
     public async Task InitializeAsync()
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
 
         // Create tables
@@ -95,7 +96,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     {
         try
         {
-            using var connection = new SQLiteConnection(_connectionString);
+            using var connection = new SqliteConnection(_connectionString);
             var count = await connection.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM Facts");
 
             return new HealthStatus
@@ -121,7 +122,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
 
     public async Task AddFactAsync(string subject, string predicate, string obj, double confidence = 1.0)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         await connection.ExecuteAsync(@"
             INSERT OR REPLACE INTO Facts (Subject, Predicate, Object, Confidence, CreatedAt, Metadata)
@@ -157,7 +158,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
 
     public async Task<IEnumerable<KnowledgeFact>> QueryAsync(string subject, string? predicate = null)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var sql = "SELECT * FROM Facts WHERE Subject = @Subject";
         if (predicate != null)
@@ -198,7 +199,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
         queue.Enqueue((subject, 0));
         visited.Add(subject);
 
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         while (queue.Count > 0)
         {
@@ -231,7 +232,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
 
     public async Task<double> GetConfidenceAsync(string subject, string predicate, string obj)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var result = await connection.QueryFirstOrDefaultAsync<double?>(@"
             SELECT Confidence FROM Facts
@@ -318,7 +319,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     private async Task UpdateConceptHierarchyAsync(string child, string parent)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         // Add direct relationship
         await connection.ExecuteAsync(@"
@@ -345,7 +346,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task<IEnumerable<string>> GetAncestorsAsync(string concept)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var ancestors = await connection.QueryAsync<string>(@"
             SELECT Parent FROM ConceptHierarchy
@@ -361,7 +362,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task<IEnumerable<string>> GetDescendantsAsync(string concept)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var descendants = await connection.QueryAsync<string>(@"
             SELECT Child FROM ConceptHierarchy
@@ -377,7 +378,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task<IEnumerable<KnowledgeFact>> FindPathAsync(string start, string end)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var visited = new HashSet<string>();
         var queue = new Queue<(string Node, List<KnowledgeFact> Path)>();
@@ -414,7 +415,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task<KnowledgeGraphStats> GetStatisticsAsync()
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var stats = new KnowledgeGraphStats
         {
@@ -441,7 +442,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task PruneAsync(double minConfidence = 0.1)
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var deleted = await connection.ExecuteAsync(@"
             DELETE FROM Facts WHERE Confidence < @MinConfidence",
@@ -455,7 +456,7 @@ public class KnowledgeGraphService : IKnowledgeStore, ISubsystem
     /// </summary>
     public async Task<string> ExportAsync()
     {
-        using var connection = new SQLiteConnection(_connectionString);
+        using var connection = new SqliteConnection(_connectionString);
 
         var facts = await connection.QueryAsync<FactDto>("SELECT * FROM Facts");
 
@@ -517,4 +518,5 @@ public class KnowledgeGraphStats
     public int TotalObjects { get; set; }
     public double AverageConfidence { get; set; }
     public Dictionary<string, int> PredicateDistribution { get; set; } = new();
+}
 }
