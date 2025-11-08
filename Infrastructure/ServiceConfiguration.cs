@@ -9,7 +9,8 @@ using AWIS.AI;
 using AWIS.Vision;
 using AWIS.Data;
 
-namespace AWIS.Infrastructure;
+namespace AWIS.Infrastructure
+{
 
 /// <summary>
 /// Dependency injection and service configuration
@@ -631,4 +632,5 @@ public class NLPProcessor : INLPProcessor
             Confidence = 0.1
         });
     }
+}
 }

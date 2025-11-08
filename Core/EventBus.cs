@@ -6,7 +6,8 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace AWIS.Core;
+namespace AWIS.Core
+{
 
 /// <summary>
 /// Thread-safe event bus implementation using channels for async message passing
@@ -438,4 +439,5 @@ public class EventReplayer
     {
         return _recordedEvents.ToList();
     }
+}
 }

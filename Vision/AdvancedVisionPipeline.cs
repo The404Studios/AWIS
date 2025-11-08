@@ -6,7 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AWIS.Core;
 
-namespace AWIS.Vision;
+namespace AWIS.Vision
+{
 
 /// <summary>
 /// Advanced computer vision pipeline with tracking, face recognition, and real-time processing
@@ -706,4 +707,5 @@ public class PoseEstimator
 
         return count > 0 ? totalDistance / count : double.MaxValue;
     }
+}
 }

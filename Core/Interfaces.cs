@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
 
-namespace AWIS.Core;
+namespace AWIS.Core
+{
 
 /// <summary>
 /// Universal interface for all subsystems
@@ -408,4 +409,5 @@ public enum LogLevel
     Warning,
     Error,
     Critical
+}
 }

@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AWIS.MachineLearning;
+namespace AWIS.MachineLearning
+{
 
 /// <summary>
 /// Data preprocessing and feature engineering pipeline
@@ -674,4 +675,5 @@ public class FeatureSelector
 
         return denominator > 1e-10 ? numerator / denominator : 0;
     }
+}
 }

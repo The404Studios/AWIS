@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using AWIS.Core;
 using AWIS.MachineLearning;
 
-namespace AWIS.AI;
+namespace AWIS.AI
+{
 
 /// <summary>
 /// Reinforcement learning integration with reward loops and continuous learning
@@ -605,4 +606,5 @@ public class AutonomousLearningSystem
         // Check if we have learned from demonstrations
         return false; // Placeholder
     }
+}
 }

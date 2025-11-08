@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AWIS.MachineLearning;
+namespace AWIS.MachineLearning
+{
 
 /// <summary>
 /// Random Forest Classifier - Ensemble of decision trees
@@ -767,4 +768,5 @@ public class TSNE
     {
         return a.Zip(b, (x, y) => Math.Pow(x - y, 2)).Sum();
     }
+}
 }

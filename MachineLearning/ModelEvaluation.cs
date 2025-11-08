@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AWIS.MachineLearning;
+namespace AWIS.MachineLearning
+{
 
 /// <summary>
 /// Comprehensive model evaluation metrics
@@ -566,4 +567,5 @@ public class FeatureImportanceAnalyzer
             Console.WriteLine($"{name}: {importance[idx]:F4}");
         }
     }
+}
 }
