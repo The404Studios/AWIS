@@ -5,7 +5,8 @@ using System.Drawing;
 using System.Runtime.CompilerServices;
 using AWIS.Core;
 
-namespace AWIS.Performance;
+namespace AWIS.Performance
+{
 
 /// <summary>
 /// Central object pool manager for high-performance reuse
@@ -15,10 +16,10 @@ public class ObjectPoolManager
     private static readonly Lazy<ObjectPoolManager> _instance = new(() => new ObjectPoolManager());
     public static ObjectPoolManager Instance => _instance.Value;
 
-    public BitmapPool Bitmaps { get; } = new();
-    public ByteArrayPool ByteArrays { get; } = new();
-    public DoubleArrayPool DoubleArrays { get; } = new();
-    public NeuralNetworkBufferPool NeuralNetworkBuffers { get; } = new();
+    public BitmapPool Bitmaps { get; } = new BitmapPool();
+    public ByteArrayPool ByteArrays { get; } = new ByteArrayPool();
+    public DoubleArrayPool DoubleArrays { get; } = new DoubleArrayPool();
+    public NeuralNetworkBufferPool NeuralNetworkBuffers { get; } = new NeuralNetworkBufferPool();
 
     private readonly IMetricsCollector? _metrics;
 
@@ -63,7 +64,7 @@ public class PoolingStatistics
 /// </summary>
 public class BitmapPool
 {
-    private readonly ConcurrentBag<PooledBitmap> _pool = new();
+    private readonly ConcurrentBag<PooledBitmap> _pool = new ConcurrentBag<PooledBitmap>();
     private long _rentCount = 0;
     private long _returnCount = 0;
     private readonly int _maxPoolSize = 100;
@@ -247,7 +248,7 @@ public struct PooledArray<T> : IDisposable
 /// </summary>
 public class NeuralNetworkBufferPool
 {
-    private readonly ConcurrentDictionary<int, ConcurrentBag<double[]>> _pools = new();
+    private readonly ConcurrentDictionary<int, ConcurrentBag<double[]>> _pools = new ConcurrentDictionary<int, ConcurrentBag<double[]>>();
     private long _rentCount = 0;
     private readonly int _maxPooledSize = 10000; // Don't pool arrays larger than this
 
@@ -530,4 +531,5 @@ public class PoolingBenchmark
             Console.WriteLine($"NN buffer pool: {stats.NNBufferRentCount - initialRent} rents, {stats.NNBufferPoolSize} in pool");
         }
     }
+}
 }

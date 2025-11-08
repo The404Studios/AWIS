@@ -8,20 +8,20 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AWIS.Core;
 
-namespace AWIS.Security;
-
-/// <summary>
-/// Scoped capability tokens for fine-grained permission control
-/// </summary>
-public class CapabilityToken
+namespace AWIS.Security
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string Principal { get; set; } = string.Empty; // User or service identity
-    public HashSet<string> Capabilities { get; set; } = new();
-    public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
-    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(24);
-    public Dictionary<string, object> Metadata { get; set; } = new();
-    public string Signature { get; set; } = string.Empty;
+    /// <summary>
+    /// Scoped capability tokens for fine-grained permission control
+    /// </summary>
+    public class CapabilityToken
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Principal { get; set; } = string.Empty; // User or service identity
+        public HashSet<string> Capabilities { get; set; } = new HashSet<string>();
+        public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(24);
+        public Dictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
+        public string Signature { get; set; } = string.Empty;
 
     public bool IsExpired => DateTime.UtcNow > ExpiresAt;
 
@@ -46,7 +46,7 @@ public class CapabilityToken
 /// </summary>
 public class CapabilityManager
 {
-    private readonly ConcurrentDictionary<string, CapabilityToken> _tokens = new();
+    private readonly ConcurrentDictionary<string, CapabilityToken> _tokens = new ConcurrentDictionary<string, CapabilityToken>();
     private readonly byte[] _signingKey;
     private readonly ICorrelatedLogger _logger;
 
@@ -185,7 +185,7 @@ public class CapabilityManager
 /// </summary>
 public class PolicyEngine
 {
-    private readonly List<Policy> _policies = new();
+    private readonly List<Policy> _policies = new ConcurrentDictionary<string, CapabilityToken>();
     private readonly ICorrelatedLogger _logger;
     private readonly IMetricsCollector _metrics;
 
@@ -382,7 +382,7 @@ public class Policy
     public string[] Actions { get; set; } = Array.Empty<string>();
     public string[]? Principals { get; set; }
     public string[]? Resources { get; set; }
-    public Dictionary<string, object> Conditions { get; set; } = new();
+    public Dictionary<string, object> Conditions { get; set; } = new ConcurrentDictionary<string, CapabilityToken>();
     public int Priority { get; set; } = 0;
 
     public bool Matches(PolicyRequest request)
@@ -442,7 +442,7 @@ public class PolicyRequest
     public string Action { get; set; } = string.Empty;
     public string Principal { get; set; } = string.Empty;
     public string? Resource { get; set; }
-    public Dictionary<string, object> Context { get; set; } = new();
+    public Dictionary<string, object> Context { get; set; } = new ConcurrentDictionary<string, CapabilityToken>();
 }
 
 /// <summary>
@@ -461,8 +461,8 @@ public class PolicyResult
 /// </summary>
 public class WebAutomationGuardrails
 {
-    private readonly HashSet<string> _allowedDomains = new();
-    private readonly Dictionary<string, RateLimiter> _rateLimiters = new();
+    private readonly HashSet<string> _allowedDomains = new ConcurrentDictionary<string, CapabilityToken>();
+    private readonly Dictionary<string, RateLimiter> _rateLimiters = new ConcurrentDictionary<string, CapabilityToken>();
     private readonly ICorrelatedLogger _logger;
     private readonly PolicyEngine _policyEngine;
 
@@ -611,8 +611,8 @@ public class RateLimiter
 {
     private readonly int _maxRequests;
     private readonly TimeSpan _window;
-    private readonly Queue<DateTime> _timestamps = new();
-    private readonly object _lock = new();
+    private readonly Queue<DateTime> _timestamps = new ConcurrentDictionary<string, CapabilityToken>();
+    private readonly object _lock = new ConcurrentDictionary<string, CapabilityToken>();
 
     public RateLimiter(int maxRequests, TimeSpan window)
     {
@@ -767,16 +767,17 @@ public class SecureMediator : IMediator
     }
 }
 
-/// <summary>
-/// Attribute to mark commands with required capabilities
-/// </summary>
-[AttributeUsage(AttributeTargets.Class)]
-public class RequiresCapabilityAttribute : Attribute
-{
-    public string Capability { get; }
-
-    public RequiresCapabilityAttribute(string capability)
+    /// <summary>
+    /// Attribute to mark commands with required capabilities
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class RequiresCapabilityAttribute : Attribute
     {
-        Capability = capability;
+        public string Capability { get; }
+
+        public RequiresCapabilityAttribute(string capability)
+        {
+            Capability = capability;
+        }
     }
 }

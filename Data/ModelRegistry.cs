@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 using Dapper;
 using AWIS.Core;
 
-namespace AWIS.Data;
+namespace AWIS.Data
+{
 
 /// <summary>
 /// Model registry for ML model governance and versioning
@@ -392,9 +393,9 @@ public class ModelRegistration
     public string? Description { get; set; }
     public string WeightsPath { get; set; } = string.Empty;
     public string? DatasetPath { get; set; }
-    public Dictionary<string, object> TrainingConfig { get; set; } = new();
-    public Dictionary<string, double> Metrics { get; set; } = new();
-    public List<string> Tags { get; set; } = new();
+    public Dictionary<string, object> TrainingConfig { get; set; } = new Dictionary<string, object>();
+    public Dictionary<string, double> Metrics { get; set; } = new Dictionary<string, double>();
+    public List<string> Tags { get; set; } = new List<string>();
     public string? ParentModelId { get; set; } // For fine-tuning lineage
 }
 
@@ -411,9 +412,9 @@ public class ModelRecord
     public string WeightsPath { get; set; } = string.Empty;
     public string? DatasetHash { get; set; }
     public string? DatasetPath { get; set; }
-    public Dictionary<string, object> TrainingConfig { get; set; } = new();
-    public Dictionary<string, double> Metrics { get; set; } = new();
-    public List<string> Tags { get; set; } = new();
+    public Dictionary<string, object> TrainingConfig { get; set; } = new Dictionary<string, object>();
+    public Dictionary<string, double> Metrics { get; set; } = new Dictionary<string, double>();
+    public List<string> Tags { get; set; } = new List<string>();
     public string Status { get; set; } = string.Empty;
 }
 
@@ -424,4 +425,5 @@ public class ModelRegisteredEvent
     public string Version { get; set; } = string.Empty;
     public string Algorithm { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+}
 }

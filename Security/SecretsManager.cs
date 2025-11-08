@@ -9,14 +9,15 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AWIS.Core;
 
-namespace AWIS.Security;
+namespace AWIS.Security
+{
 
 /// <summary>
 /// Secrets manager using Windows DPAPI for credential storage
 /// </summary>
 public class SecretsManager
 {
-    private readonly ConcurrentDictionary<string, SecretEntry> _cache = new();
+    private readonly ConcurrentDictionary<string, SecretEntry> _cache = new ConcurrentDictionary<string, SecretEntry>();
     private readonly ICorrelatedLogger _logger;
     private readonly string _storePath;
     private readonly SecretRotationScheduler _rotationScheduler;
@@ -337,7 +338,7 @@ public class SecretRotationScheduler
 {
     private readonly SecretsManager _secretsManager;
     private readonly ICorrelatedLogger _logger;
-    private readonly Dictionary<string, System.Threading.Timer> _timers = new();
+    private readonly Dictionary<string, System.Threading.Timer> _timers = new Dictionary<string, System.Threading.Timer>();
 
     public SecretRotationScheduler(SecretsManager secretsManager, ICorrelatedLogger logger)
     {
@@ -391,7 +392,7 @@ public class SecretRotationScheduler
 /// </summary>
 public class SecretFilter
 {
-    private readonly HashSet<string> _secretPatterns = new();
+    private readonly HashSet<string> _secretPatterns = new HashSet<string>();
 
     public SecretFilter()
     {
@@ -620,4 +621,5 @@ public class WindowsCredentialStore
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool CredDelete(string target, int type, int flags);
     }
+}
 }

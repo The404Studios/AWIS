@@ -8,18 +8,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
 
-namespace AWIS.Infrastructure;
+namespace AWIS.Infrastructure
+{
 
 /// <summary>
 /// Feature flags system for runtime toggles without redeployment
 /// </summary>
 public class FeatureFlagService
 {
-    private readonly ConcurrentDictionary<string, FeatureFlag> _flags = new();
+    private readonly ConcurrentDictionary<string, FeatureFlag> _flags = new ConcurrentDictionary<string, FeatureFlag>();
     private readonly ICorrelatedLogger _logger;
     private readonly string _flagsPath;
     private readonly FileSystemWatcher? _watcher;
-    private readonly ReaderWriterLockSlim _lock = new();
+    private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
 
     public FeatureFlagService(ICorrelatedLogger logger, string? flagsPath = null)
     {
@@ -433,4 +434,5 @@ public class FeatureFlagMiddleware
 public class FeatureDisabledException : Exception
 {
     public FeatureDisabledException(string message) : base(message) { }
+}
 }

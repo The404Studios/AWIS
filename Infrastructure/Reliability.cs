@@ -8,7 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
 
-namespace AWIS.Infrastructure;
+namespace AWIS.Infrastructure
+{
 
 /// <summary>
 /// Health check endpoints for liveness and readiness
@@ -18,7 +19,7 @@ public class HealthCheckService
     private readonly SubsystemOrchestrator _orchestrator;
     private readonly IMetricsCollector _metrics;
     private readonly ICorrelatedLogger _logger;
-    private readonly ConcurrentDictionary<string, HealthCheckResult> _cachedResults = new();
+    private readonly ConcurrentDictionary<string, HealthCheckResult> _cachedResults = new ConcurrentDictionary<string, HealthCheckResult>();
     private readonly TimeSpan _cacheTimeout = TimeSpan.FromSeconds(5);
 
     public HealthCheckService(
@@ -180,7 +181,7 @@ public class ReadinessResult
     public bool IsReady { get; set; }
     public DateTime Timestamp { get; set; }
     public long ResponseTimeMs { get; set; }
-    public Dictionary<string, SubsystemHealthCheck> SubsystemChecks { get; set; } = new();
+    public Dictionary<string, SubsystemHealthCheck> SubsystemChecks { get; set; } = new Dictionary<string, SubsystemHealthCheck>();
     public string? Error { get; set; }
 }
 
@@ -188,16 +189,16 @@ public class SubsystemHealthCheck
 {
     public bool IsHealthy { get; set; }
     public string Status { get; set; } = string.Empty;
-    public Dictionary<string, object> Metrics { get; set; } = new();
+    public Dictionary<string, object> Metrics { get; set; } = new Dictionary<string, object>();
 }
 
 public class DetailedHealthResult
 {
     public bool IsHealthy { get; set; }
     public DateTime Timestamp { get; set; }
-    public Dictionary<string, SubsystemHealthCheck> SubsystemChecks { get; set; } = new();
-    public Dictionary<string, Dictionary<string, object>> Metrics { get; set; } = new();
-    public Dictionary<string, object> SystemInfo { get; set; } = new();
+    public Dictionary<string, SubsystemHealthCheck> SubsystemChecks { get; set; } = new Dictionary<string, SubsystemHealthCheck>();
+    public Dictionary<string, Dictionary<string, object>> Metrics { get; set; } = new Dictionary<string, Dictionary<string, object>>();
+    public Dictionary<string, object> SystemInfo { get; set; } = new Dictionary<string, object>();
 }
 
 public class HealthCheckResult
@@ -214,7 +215,7 @@ public class SubsystemWatchdog
     private readonly SubsystemOrchestrator _orchestrator;
     private readonly ICorrelatedLogger _logger;
     private readonly IMetricsCollector _metrics;
-    private readonly Dictionary<string, WatchdogState> _states = new();
+    private readonly Dictionary<string, WatchdogState> _states = new Dictionary<string, WatchdogState>();
     private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(30);
     private readonly TimeSpan _hungThreshold = TimeSpan.FromMinutes(2);
     private CancellationTokenSource? _cts;
@@ -587,8 +588,8 @@ public class ResilientHttpClient
 /// </summary>
 public class GracefulShutdownCoordinator
 {
-    private readonly CancellationTokenSource _globalCts = new();
-    private readonly List<Func<CancellationToken, Task>> _shutdownCallbacks = new();
+    private readonly CancellationTokenSource _globalCts = new CancellationTokenSource();
+    private readonly List<Func<CancellationToken, Task>> _shutdownCallbacks = new List<Func<CancellationToken, Task>>();
     private readonly ICorrelatedLogger _logger;
     private readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(30);
 
@@ -640,4 +641,5 @@ public class GracefulShutdownCoordinator
 
         _logger.LogWithContext("Graceful shutdown completed", LogLevel.Information);
     }
+}
 }
