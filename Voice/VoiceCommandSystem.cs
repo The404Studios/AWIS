@@ -114,25 +114,50 @@ namespace AWIS.Voice
         {
             try
             {
-                // List available audio devices
-                Console.WriteLine("[VOICE] Available audio input devices:");
+                // List available speech recognizers
+                Console.WriteLine("\n[VOICE] Available speech recognizers:");
                 var recognizers = SpeechRecognitionEngine.InstalledRecognizers();
+                int index = 1;
                 foreach (var info in recognizers)
                 {
-                    Console.WriteLine($"  - {info.Name} ({info.Culture.Name})");
+                    Console.WriteLine($"  {index}. {info.Name} ({info.Culture.Name})");
+                    index++;
                 }
 
+                // Prompt user to select or use default
+                Console.WriteLine("\n[VOICE] Press ENTER to use default audio device, or type 'skip' to disable voice recognition:");
+                var userInput = Console.ReadLine()?.Trim().ToLower();
+
+                if (userInput == "skip")
+                {
+                    Console.WriteLine("[VOICE] Voice recognition disabled. Voice commands will only work via text input.");
+                    speechRecognizer = null;
+                    return;
+                }
+
+                Console.WriteLine("[VOICE] Using default audio input device...");
                 speechRecognizer = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
 
-                // Build grammar with common commands
+                // Build grammar with common commands (including new goal/mode commands)
                 var choices = new Choices();
                 choices.Add(new string[] {
+                    // Goal and mode control
+                    "hey do this", "do this", "add goal", "set goal", "clear goals",
+                    "enable autonomous mode", "disable autonomous mode", "stop moving",
+                    "what are you doing",
+                    // Learning
                     "start recording", "stop recording", "repeat what I did",
+                    // Game actions
                     "fight", "attack", "run away", "retreat", "follow",
+                    // Camera control
                     "click here", "press", "look left", "look right",
-                    "look up", "look down", "turn around", "stop", "quit",
-                    "open", "search for", "play", "what do you see",
-                    "analyze screen", "find", "tell me about"
+                    "look up", "look down", "turn around",
+                    // Utility
+                    "stop", "quit", "open", "search for", "play",
+                    "what do you see", "analyze screen", "find", "tell me about",
+                    // Debug
+                    "show debug overlay", "enable debug overlay", "disable debug overlay",
+                    "show priority registers", "show task cycles"
                 });
 
                 var gb = new GrammarBuilder();
@@ -149,11 +174,12 @@ namespace AWIS.Voice
 
                 speechRecognizer.SetInputToDefaultAudioDevice();
 
-                Console.WriteLine("[VOICE] Speech recognition initialized successfully.");
+                Console.WriteLine("[VOICE] ✅ Speech recognition initialized successfully.");
+                Console.WriteLine("[VOICE] 🎤 Microphone ready - speak your commands!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[VOICE] Failed to initialize speech recognition: {ex.Message}");
+                Console.WriteLine($"[VOICE] ❌ Failed to initialize speech recognition: {ex.Message}");
                 Console.WriteLine("[VOICE] Voice commands will only work via text input.");
                 speechRecognizer = null;
             }

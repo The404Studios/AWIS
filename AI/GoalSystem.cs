@@ -155,6 +155,18 @@ namespace AWIS.AI
         }
 
         /// <summary>
+        /// Add a user-specified goal from voice command or text input
+        /// </summary>
+        public void AddUserGoal(string description, int timeoutMs = 600000)
+        {
+            // Generate a unique ID from the description
+            var id = "user_" + description.ToLower().Replace(" ", "_").Replace("[^a-z0-9_]", "") + "_" + Guid.NewGuid().ToString("N")[..8];
+
+            // User goals are high priority by default
+            SetGoal(id, description, GoalPriority.High, timeoutMs);
+        }
+
+        /// <summary>
         /// Autonomously generate a new goal based on context
         /// </summary>
         public void GenerateAutonomousGoal(string context = "")
