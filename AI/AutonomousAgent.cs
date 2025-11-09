@@ -807,41 +807,121 @@ namespace AWIS.AI
             var random = new Random();
             var progress = goalSystem.GetGoalProgress(goal.Id);
 
-            // Simple goal execution based on goal ID patterns
-            if (goal.Id.Contains("explore"))
-            {
-                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(800, 1500));
-                await inputController.MoveAxis(random.NextDouble() - 0.5, 0, sensitivity: 100, duration: 150);
+            // Analyze the goal description to determine appropriate actions
+            var description = goal.Description.ToLower();
 
-                if (progress > 0.8)
+            // Movement-related goals
+            if (description.Contains("move") || description.Contains("go") || description.Contains("walk") ||
+                description.Contains("run") || description.Contains("forward") || description.Contains("explore"))
+            {
+                Console.WriteLine($"[GOAL] Executing movement action for: {goal.Description}");
+                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(1000, 2000));
+                await inputController.MoveAxis((random.NextDouble() - 0.5) * 0.5, 0, sensitivity: 100, duration: 150);
+                await Task.Delay(random.Next(500, 1000));
+
+                if (progress > 0.6)
                 {
                     goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
                 }
             }
-            else if (goal.Id.Contains("learn") || goal.Id.Contains("practice"))
+            // Combat-related goals
+            else if (description.Contains("fight") || description.Contains("attack") || description.Contains("combat") ||
+                     description.Contains("enemy") || description.Contains("target") || description.Contains("kill"))
             {
-                // Practice controls
-                await inputController.PressKey(HumanizedInputController.VK.SPACE);
-                await Task.Delay(300);
-                await inputController.MoveAxis(0.5, 0.3, sensitivity: 120, duration: 200);
+                Console.WriteLine($"[GOAL] Executing combat action for: {goal.Description}");
+                // Look around for targets
+                await inputController.MoveAxis(0.3, 0, sensitivity: 120, duration: 200);
+                await Task.Delay(200);
+                // Simulate attack
+                await inputController.LeftClick();
+                await Task.Delay(500);
 
-                if (progress > 0.7)
+                if (progress > 0.5)
                 {
                     goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
                 }
             }
+            // Search/Find goals
+            else if (description.Contains("find") || description.Contains("search") || description.Contains("look for") ||
+                     description.Contains("locate"))
+            {
+                Console.WriteLine($"[GOAL] Executing search action for: {goal.Description}");
+                // Look around 360 degrees
+                for (int i = 0; i < 2; i++)
+                {
+                    await inputController.MoveAxis(0.5, 0, sensitivity: 100, duration: 300);
+                    await Task.Delay(200);
+                }
+                // Move forward while searching
+                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(800, 1500));
+
+                if (progress > 0.4)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
+                }
+            }
+            // Learning/Practice goals
+            else if (description.Contains("learn") || description.Contains("practice") || description.Contains("train") ||
+                     description.Contains("improve"))
+            {
+                Console.WriteLine($"[GOAL] Executing practice action for: {goal.Description}");
+                // Practice various controls
+                await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                await Task.Delay(300);
+                await inputController.MoveAxis(0.5, 0.3, sensitivity: 120, duration: 200);
+                await Task.Delay(300);
+
+                var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
+                await inputController.PressKey(strafeKey, 500);
+
+                if (progress > 0.6)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
+                }
+            }
+            // Collect/Gather goals
+            else if (description.Contains("collect") || description.Contains("gather") || description.Contains("get") ||
+                     description.Contains("pick up") || description.Contains("take"))
+            {
+                Console.WriteLine($"[GOAL] Executing collection action for: {goal.Description}");
+                // Move to items and interact
+                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1000));
+                await Task.Delay(300);
+                await inputController.PressKey(HumanizedInputController.VK.E); // Common interact key
+
+                if (progress > 0.5)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
+                }
+            }
+            // Default: Use advanced decision maker
             else
             {
-                // Generic goal progress
-                await Task.Delay(random.Next(1000, 2000));
+                Console.WriteLine($"[GOAL] Using intelligent decision making for: {goal.Description}");
 
-                if (progress > 0.9)
+                // Use decision maker to choose an action
+                var context = new DecisionContext
+                {
+                    CurrentState = "working_on_goal",
+                    HasActiveGoal = true,
+                    RecentFailures = recentFailures,
+                    ExplorationDesire = personality.Curiosity,
+                    SocialInteraction = false
+                };
+
+                var decision = decisionMaker.MakeDecision(context);
+                Console.WriteLine($"[DECISION] {decision.Reasoning}");
+
+                var success = await ExecuteDecision(decision.Action, random);
+                decisionMaker.LearnFromOutcome(decision.Action, success);
+
+                if (progress > 0.7)
                 {
                     goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
                 }
             }
 
-            await Task.Delay(random.Next(500, 1500));
+            await Task.Delay(random.Next(300, 800));
         }
 
         /// <summary>
