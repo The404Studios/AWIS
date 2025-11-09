@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
+using AWIS.Debug;
 using AWIS.Input;
 using AWIS.Voice;
 using AWIS.Vision;
@@ -29,6 +30,11 @@ namespace AWIS.AI
         private readonly IntelligentResponseSystem intelligentResponse;
         private readonly AdvancedDecisionMaker decisionMaker;
         private readonly MemoryPersistence memoryPersistence;
+
+        // Advanced task execution and priority systems
+        private readonly TaskExecutionCycle executionCycle;
+        private readonly PriorityRegisterSystem prioritySystem;
+        private readonly DebugOverlay debugOverlay;
 
         private bool isRunning;
         private Task? mainLoopTask;
@@ -56,9 +62,17 @@ namespace AWIS.AI
             cancellationToken = new CancellationTokenSource();
             currentMode = GameMode.Idle;
 
+            // Initialize advanced task execution and priority systems
+            executionCycle = new TaskExecutionCycle();
+            prioritySystem = new PriorityRegisterSystem(executionCycle);
+            debugOverlay = new DebugOverlay(executionCycle, prioritySystem);
+
             Console.WriteLine($"\n[AGENT] 🤖 {personality.Name} initialized!");
             Console.WriteLine($"[AGENT] {personality.Description}");
             Console.WriteLine($"[AGENT] Current mood: {personality.GetMoodDescription()}\n");
+            Console.WriteLine($"[AGENT] 🎯 Task execution cycle system active");
+            Console.WriteLine($"[AGENT] 📊 12-level priority registers ready");
+            Console.WriteLine($"[AGENT] 🔍 Debug overlay initialized\n");
 
             // Load saved knowledge asynchronously
             Task.Run(async () => await LoadSavedKnowledgeAsync());
@@ -309,6 +323,44 @@ namespace AWIS.AI
                 await SpeakAsync("I've saved everything I've learned!");
             });
 
+            // Debug overlay commands
+            voiceSystem.RegisterHandler("show debug overlay", async cmd =>
+            {
+                debugOverlay.RenderSummary();
+                await SpeakAsync("Debug overlay summary displayed!");
+            });
+
+            voiceSystem.RegisterHandler("show priority registers", async cmd =>
+            {
+                Console.WriteLine(prioritySystem.GetRegisterVisualization());
+                await SpeakAsync("Showing priority register status!");
+            });
+
+            voiceSystem.RegisterHandler("show task cycles", async cmd =>
+            {
+                var cycles = executionCycle.GetActiveCycles();
+                if (cycles.Count > 0)
+                {
+                    await SpeakAsync($"I have {cycles.Count} active task cycles running!");
+                }
+                else
+                {
+                    await SpeakAsync("No active task cycles at the moment.");
+                }
+            });
+
+            voiceSystem.RegisterHandler("enable debug overlay", async cmd =>
+            {
+                debugOverlay.Start();
+                await SpeakAsync("Debug overlay enabled! You can see all my processes now.");
+            });
+
+            voiceSystem.RegisterHandler("disable debug overlay", async cmd =>
+            {
+                debugOverlay.Stop();
+                await SpeakAsync("Debug overlay disabled.");
+            });
+
             // Conversational handler (catches everything not matched by specific handlers)
             voiceSystem.RegisterHandler("", async cmd =>
             {
@@ -483,7 +535,7 @@ namespace AWIS.AI
         }
 
         /// <summary>
-        /// Process idle mode - intelligent decision-making with learning
+        /// Process idle mode - intelligent decision-making with learning and task cycle management
         /// </summary>
         private async Task ProcessIdleMode()
         {
@@ -518,9 +570,42 @@ namespace AWIS.AI
             var decision = decisionMaker.MakeDecision(context);
             Console.WriteLine($"[DECISION] {decision.Reasoning}");
 
-            try
+            // Determine priority register based on decision confidence and failures
+            var priorityRegister = CalculatePriorityRegister(decision.Confidence, recentFailures);
+
+            // Schedule task through priority system with cycle checking
+            prioritySystem.ScheduleTask(
+                $"action_{decision.Action}_{DateTime.UtcNow.Ticks}",
+                async () =>
+                {
+                    var success = await ExecuteDecision(decision.Action, random);
+
+                    // Create evidence for task validation
+                    var evidence = new TaskEvidence
+                    {
+                        Data = new Dictionary<string, object>
+                        {
+                            ["action"] = decision.Action,
+                            ["success"] = success,
+                            ["timestamp"] = DateTime.UtcNow
+                        },
+                        RequiredFields = new List<string> { "action", "success" },
+                        Confidence = success ? 0.9 : 0.3,
+                        Description = $"Executed {decision.Action}"
+                    };
+
+                    return evidence;
+                },
+                priorityRegister,
+                maxRetries: 2
+            );
+
+            // Execute next highest priority task
+            var result = await prioritySystem.ExecuteNextTask();
+
+            if (result != null)
             {
-                var success = await ExecuteDecision(decision.Action, random);
+                var success = result.Evidence?.Data.GetValueOrDefault("success") is bool s && s;
 
                 // Learn from outcome
                 decisionMaker.LearnFromOutcome(decision.Action, success);
@@ -536,13 +621,21 @@ namespace AWIS.AI
                     personality.LearnFromExperience(ExperienceType.Exploration, false);
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[AUTONOMOUS] Error during action: {ex.Message}");
-                recentFailures++;
-                decisionMaker.LearnFromOutcome(decision.Action, false);
-                personality.LearnFromExperience(ExperienceType.Exploration, false);
-            }
+        }
+
+        /// <summary>
+        /// Calculate priority register (1-12) based on confidence and failures
+        /// </summary>
+        private int CalculatePriorityRegister(double confidence, int failures)
+        {
+            // High confidence, low failures = higher priority (lower number)
+            // Low confidence, high failures = lower priority (higher number)
+
+            var basePriority = 6; // Middle priority
+            basePriority -= (int)(confidence * 3); // Confidence can reduce by up to 3
+            basePriority += Math.Min(failures, 3); // Failures can increase by up to 3
+
+            return Math.Clamp(basePriority, 1, 12);
         }
 
         /// <summary>
@@ -868,12 +961,19 @@ namespace AWIS.AI
 
         public void Dispose()
         {
+            // Show final debug overlay summary
+            Console.WriteLine("\n[AGENT] Shutting down...");
+            debugOverlay.RenderSummary();
+
             // Save knowledge before shutting down
             Task.Run(async () => await SaveKnowledgeAsync()).Wait(5000);
 
             Stop();
+            debugOverlay.Dispose();
             voiceSystem.Dispose();
             cancellationToken.Dispose();
+
+            Console.WriteLine("[AGENT] All systems shut down successfully.\n");
         }
     }
 
