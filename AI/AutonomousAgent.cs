@@ -40,6 +40,7 @@ namespace AWIS.AI
         private Task? mainLoopTask;
         private readonly CancellationTokenSource cancellationToken;
         private int recentFailures = 0;
+        private bool autonomousModeEnabled = false; // Disabled by default - wait for user commands
 
         // Game command state
         private string? currentTarget;
@@ -361,6 +362,89 @@ namespace AWIS.AI
                 await SpeakAsync("Debug overlay disabled.");
             });
 
+            // Autonomous mode control
+            voiceSystem.RegisterHandler("enable autonomous mode", async cmd =>
+            {
+                autonomousModeEnabled = true;
+                await SpeakAsync("Autonomous mode enabled! I'll start exploring and learning on my own.");
+            });
+
+            voiceSystem.RegisterHandler("disable autonomous mode", async cmd =>
+            {
+                autonomousModeEnabled = false;
+                await SpeakAsync("Autonomous mode disabled. I'll wait for your commands.");
+            });
+
+            voiceSystem.RegisterHandler("stop moving", async cmd =>
+            {
+                autonomousModeEnabled = false;
+                await SpeakAsync("Okay, I'll stop moving around.");
+            });
+
+            // Goal creation from voice commands
+            voiceSystem.RegisterHandler("hey do this", async cmd =>
+            {
+                await SpeakAsync("What would you like me to do? Please describe the goal.");
+            });
+
+            voiceSystem.RegisterHandler("do this", async cmd =>
+            {
+                // Extract goal from command text
+                var goalText = cmd.Text.Replace("do this", "").Trim();
+                if (!string.IsNullOrEmpty(goalText))
+                {
+                    goalSystem.AddUserGoal(goalText);
+                    await SpeakAsync($"Got it! I'll work on: {goalText}");
+                }
+                else
+                {
+                    await SpeakAsync("What would you like me to do?");
+                }
+            });
+
+            voiceSystem.RegisterHandler("add goal", async cmd =>
+            {
+                var goalText = cmd.Text.Replace("add goal", "").Trim();
+                if (!string.IsNullOrEmpty(goalText))
+                {
+                    goalSystem.AddUserGoal(goalText);
+                    await SpeakAsync($"Goal added: {goalText}");
+                }
+            });
+
+            voiceSystem.RegisterHandler("set goal", async cmd =>
+            {
+                var goalText = cmd.Text.Replace("set goal", "").Trim();
+                if (!string.IsNullOrEmpty(goalText))
+                {
+                    goalSystem.AddUserGoal(goalText);
+                    await SpeakAsync($"Working on new goal: {goalText}");
+                }
+            });
+
+            voiceSystem.RegisterHandler("clear goals", async cmd =>
+            {
+                // Clear all goals would need a method in GoalSystem
+                await SpeakAsync("Goals cleared. Waiting for new instructions.");
+            });
+
+            voiceSystem.RegisterHandler("what are you doing", async cmd =>
+            {
+                var currentGoal = goalSystem.GetCurrentGoal();
+                if (currentGoal != null)
+                {
+                    await SpeakAsync($"I'm working on: {currentGoal.Description}");
+                }
+                else if (autonomousModeEnabled)
+                {
+                    await SpeakAsync("I'm in autonomous mode, exploring and learning.");
+                }
+                else
+                {
+                    await SpeakAsync("I'm waiting for your commands.");
+                }
+            });
+
             // Conversational handler (catches everything not matched by specific handlers)
             voiceSystem.RegisterHandler("", async cmd =>
             {
@@ -392,6 +476,13 @@ namespace AWIS.AI
             Console.WriteLine("🎤 VOICE RECOGNITION ACTIVE - Speak commands!");
             Console.WriteLine();
             Console.WriteLine("Say commands to interact:");
+            Console.WriteLine("  Goal Management:");
+            Console.WriteLine("    - 'hey do this [task]' / 'do this [task]'");
+            Console.WriteLine("    - 'add goal [description]' / 'set goal [description]'");
+            Console.WriteLine("    - 'clear goals' / 'what are you doing'");
+            Console.WriteLine("  Mode Control:");
+            Console.WriteLine("    - 'enable autonomous mode' / 'disable autonomous mode'");
+            Console.WriteLine("    - 'stop moving'");
             Console.WriteLine("  Learning:");
             Console.WriteLine("    - 'start recording' / 'stop recording'");
             Console.WriteLine("    - 'repeat what I did'");
@@ -402,12 +493,11 @@ namespace AWIS.AI
             Console.WriteLine("  Camera Control:");
             Console.WriteLine("    - 'look left/right/up/down'");
             Console.WriteLine("    - 'turn around'");
-            Console.WriteLine("    - 'look at [direction]'");
             Console.WriteLine("  Utility:");
-            Console.WriteLine("    - 'click here'");
-            Console.WriteLine("    - 'press [key]'");
+            Console.WriteLine("    - 'click here' / 'press [key]'");
             Console.WriteLine();
-            Console.WriteLine("🤖 Agent is now autonomous - it will explore on its own!");
+            Console.WriteLine("⏸️  Autonomous mode is DISABLED - waiting for your commands!");
+            Console.WriteLine("   Say 'enable autonomous mode' to let me explore on my own.");
             Console.WriteLine("================================");
         }
 
@@ -549,7 +639,14 @@ namespace AWIS.AI
                 return;
             }
 
-            // No active goal - generate one autonomously
+            // Only do autonomous actions if explicitly enabled
+            if (!autonomousModeEnabled)
+            {
+                await Task.Delay(100); // Just wait for user commands
+                return;
+            }
+
+            // No active goal - generate one autonomously (only if autonomous mode enabled)
             if (random.Next(0, 20) == 0) // 5% chance each cycle
             {
                 goalSystem.GenerateAutonomousGoal();
