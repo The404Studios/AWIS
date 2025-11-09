@@ -647,7 +647,7 @@ namespace AWIS.AI
             {
                 case "move_forward":
                     Console.WriteLine("[AUTONOMOUS] Exploring forward...");
-                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
+                    await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1500));
                     await Task.Delay(random.Next(2000, 5000));
                     return true;
 
@@ -672,7 +672,7 @@ namespace AWIS.AI
                     var pitch = (random.NextDouble() - 0.5) * 0.5;
                     await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
                     await Task.Delay(500);
-                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1000));
+                    await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1000));
                     await Task.Delay(random.Next(1000, 3000));
                     return true;
 
@@ -681,7 +681,7 @@ namespace AWIS.AI
                     await inputController.PressKey(HumanizedInputController.VK.SPACE);
                     await Task.Delay(300);
                     var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
-                    await inputController.HoldKey(strafeKey, random.Next(300, 800));
+                    await inputController.PressKey(strafeKey, random.Next(300, 800));
                     await Task.Delay(random.Next(2000, 4000));
                     return true;
 
@@ -859,12 +859,12 @@ namespace AWIS.AI
                 await SpeakAsync("Let me look at the screen...");
 
                 var screenshot = vision.CaptureScreen();
-                var analysis = vision.AnalyzeScreen(screenshot);
+                var detectedObjects = vision.DetectObjects(screenshot);
 
                 // Simple description based on what we can detect
                 var description = $"I can see the screen. ";
-                description += analysis.DetectedObjects.Count > 0
-                    ? $"I detected {analysis.DetectedObjects.Count} objects. "
+                description += detectedObjects.Count > 0
+                    ? $"I detected {detectedObjects.Count} objects. "
                     : "I'm analyzing the visual elements. ";
 
                 var response = personality.GenerateResponse(description, ResponseType.Discovery);

@@ -216,15 +216,15 @@ namespace AWIS.Debug
         /// <summary>
         /// Get status icon for task status
         /// </summary>
-        private string GetStatusIcon(TaskStatus status)
+        private string GetStatusIcon(TaskExecutionStatus status)
         {
             return status switch
             {
-                TaskStatus.Running => "⚙️",
-                TaskStatus.Retrying => "🔄",
-                TaskStatus.Completed => "✅",
-                TaskStatus.Failed => "❌",
-                TaskStatus.Error => "⚠️",
+                TaskExecutionStatus.Running => "⚙️",
+                TaskExecutionStatus.Retrying => "🔄",
+                TaskExecutionStatus.Completed => "✅",
+                TaskExecutionStatus.Failed => "❌",
+                TaskExecutionStatus.Error => "⚠️",
                 _ => "⏸️"
             };
         }
@@ -234,7 +234,7 @@ namespace AWIS.Debug
         /// </summary>
         private string GetLoadingBar(TaskCycle cycle)
         {
-            if (cycle.Status == TaskStatus.Completed)
+            if (cycle.Status == TaskExecutionStatus.Completed)
             {
                 return "[" + new string('█', 10) + "] DONE";
             }

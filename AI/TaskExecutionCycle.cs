@@ -40,7 +40,7 @@ namespace AWIS.AI
             var startTime = globalTimer.Elapsed.TotalMilliseconds;
             var cycle = GetOrCreateCycle(taskId, priorityRegister);
 
-            cycle.Status = TaskStatus.Running;
+            cycle.Status = TaskExecutionStatus.Running;
             cycle.CurrentAttempt++;
             cycle.LastStartTime = startTime;
 
@@ -61,7 +61,7 @@ namespace AWIS.AI
 
                 if (isComplete)
                 {
-                    cycle.Status = TaskStatus.Completed;
+                    cycle.Status = TaskExecutionStatus.Completed;
                     cycle.CompletionTime = endTime;
                     cycle.TotalDuration += duration;
 
@@ -82,7 +82,7 @@ namespace AWIS.AI
                 {
                     // Evidence not filled - retry
                     Console.WriteLine($"[CYCLE] ⚠️ Evidence incomplete for '{taskId}', retrying... ({cycle.CurrentAttempt}/{maxRetries})");
-                    cycle.Status = TaskStatus.Retrying;
+                    cycle.Status = TaskExecutionStatus.Retrying;
 
                     // Calculate backoff based on priority
                     var backoffMs = CalculateBackoff(priorityRegister, cycle.CurrentAttempt);
@@ -94,7 +94,7 @@ namespace AWIS.AI
                 else
                 {
                     // Max retries reached
-                    cycle.Status = TaskStatus.Failed;
+                    cycle.Status = TaskExecutionStatus.Failed;
                     UpdateBackpropagation(taskId, false, duration);
 
                     Console.WriteLine($"[CYCLE] ❌ Task '{taskId}' failed after {maxRetries} attempts");
@@ -110,7 +110,7 @@ namespace AWIS.AI
             }
             catch (Exception ex)
             {
-                cycle.Status = TaskStatus.Error;
+                cycle.Status = TaskExecutionStatus.Error;
                 Console.WriteLine($"[CYCLE] ❌ Error in task '{taskId}': {ex.Message}");
 
                 UpdateBackpropagation(taskId, false, 0);
@@ -259,7 +259,7 @@ namespace AWIS.AI
                 {
                     TaskId = taskId,
                     PriorityRegister = priority,
-                    Status = TaskStatus.Pending
+                    Status = TaskExecutionStatus.Pending
                 };
             }
             return activeCycles[taskId];
@@ -294,7 +294,7 @@ namespace AWIS.AI
     {
         public string TaskId { get; set; } = string.Empty;
         public int PriorityRegister { get; set; } // 1-12, 1 = highest priority
-        public TaskStatus Status { get; set; }
+        public TaskExecutionStatus Status { get; set; }
         public int CurrentAttempt { get; set; }
         public double LastStartTime { get; set; }
         public double CompletionTime { get; set; }
@@ -330,7 +330,7 @@ namespace AWIS.AI
         public string? Error { get; set; }
     }
 
-    public enum TaskStatus
+    public enum TaskExecutionStatus
     {
         Pending,
         Running,
