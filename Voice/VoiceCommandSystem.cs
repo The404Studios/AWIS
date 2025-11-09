@@ -145,6 +145,15 @@ namespace AWIS.Voice
             processingThread?.Join(1000);
         }
 
+        /// <summary>
+        /// Process a text command (for manual input)
+        /// </summary>
+        public void ProcessTextCommand(string text)
+        {
+            var command = ParseCommand(text);
+            commandQueue.Enqueue(command);
+        }
+
         private void ProcessCommandQueueLoop()
         {
             while (isProcessing && !cancellationToken.Token.IsCancellationRequested)
