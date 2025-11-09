@@ -167,7 +167,7 @@ namespace AWIS.Core
         private readonly int numWorkers;
         private readonly ConcurrentQueue<Action> taskQueue;
         private readonly List<Task> workers;
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource cancellationTokenSource = null!;
 
         public DistributedTaskExecutor(int numWorkers = -1)
         {
@@ -329,7 +329,7 @@ namespace AWIS.Core
                     return (
                         count: times.Count,
                         avgMs: times.Average(),
-                        totalMs: times.Sum()
+                        totalMs: (double)times.Sum()
                     );
                 });
         }

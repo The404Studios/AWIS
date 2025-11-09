@@ -75,7 +75,10 @@ namespace AWIS.Core
         Abort,
         Cancel,
         Undo,
-        Help
+        Help,
+
+        // Timing
+        Wait
     }
 
     /// <summary>

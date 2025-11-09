@@ -15,8 +15,8 @@ namespace AWIS
     /// </summary>
     class Program
     {
-        private static ParallelSystemCoordinator coordinator;
-        private static ParallelPerformanceMonitor performanceMonitor;
+        private static ParallelSystemCoordinator coordinator = null!;
+        private static ParallelPerformanceMonitor performanceMonitor = null!;
 
         static async Task Main(string[] args)
         {

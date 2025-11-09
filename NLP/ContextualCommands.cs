@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
+using AWIS.Core;
 
 namespace AWIS.NLP
 {
@@ -538,17 +539,6 @@ namespace AWIS.NLP
         public string? TargetObject { get; set; }
         public string? KeyMapping { get; set; }
         public required string Description { get; set; }
-    }
-
-    public enum ActionType
-    {
-        Click,
-        Press,
-        Type,
-        Move,
-        Scroll,
-        Drag,
-        Wait
     }
 
     #endregion

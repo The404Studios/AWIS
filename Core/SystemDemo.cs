@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.Drawing;
 using AWIS.AI;
@@ -276,6 +277,7 @@ namespace AWIS.Core
             voiceSystem.StopProcessing();
         }
 
+        [SupportedOSPlatform("windows")]
         private static void DemoComputerVision()
         {
             PrintSection("Computer Vision System");
