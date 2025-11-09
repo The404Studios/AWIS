@@ -144,6 +144,46 @@ namespace AWIS.AI
                     await inputController.PressKey(key.Value);
                 }
             });
+
+            // Camera control commands
+            voiceSystem.RegisterHandler("look left", async cmd =>
+            {
+                await inputController.MoveAxis(-1.0, 0.0, sensitivity: 150);
+            });
+
+            voiceSystem.RegisterHandler("look right", async cmd =>
+            {
+                await inputController.MoveAxis(1.0, 0.0, sensitivity: 150);
+            });
+
+            voiceSystem.RegisterHandler("look up", async cmd =>
+            {
+                await inputController.MoveAxis(0.0, 1.0, sensitivity: 150);
+            });
+
+            voiceSystem.RegisterHandler("look down", async cmd =>
+            {
+                await inputController.MoveAxis(0.0, -1.0, sensitivity: 150);
+            });
+
+            voiceSystem.RegisterHandler("turn around", async cmd =>
+            {
+                await inputController.MoveAxis(1.0, 0.0, sensitivity: 300, duration: 200);
+            });
+
+            voiceSystem.RegisterHandler("look at", async cmd =>
+            {
+                // Extract direction or small adjustments
+                var text = cmd.Text.ToLower();
+                if (text.Contains("left"))
+                    await inputController.MoveAxis(-0.5, 0.0, sensitivity: 100);
+                else if (text.Contains("right"))
+                    await inputController.MoveAxis(0.5, 0.0, sensitivity: 100);
+                else if (text.Contains("up"))
+                    await inputController.MoveAxis(0.0, 0.5, sensitivity: 100);
+                else if (text.Contains("down"))
+                    await inputController.MoveAxis(0.0, -0.5, sensitivity: 100);
+            });
         }
 
         /// <summary>
@@ -159,11 +199,20 @@ namespace AWIS.AI
 
             Console.WriteLine("=== Autonomous Agent Started ===");
             Console.WriteLine("Say commands to interact:");
-            Console.WriteLine("  - 'start recording' / 'stop recording'");
-            Console.WriteLine("  - 'repeat what I did'");
-            Console.WriteLine("  - 'fight [target]'");
-            Console.WriteLine("  - 'run away'");
-            Console.WriteLine("  - 'follow [name]'");
+            Console.WriteLine("  Learning:");
+            Console.WriteLine("    - 'start recording' / 'stop recording'");
+            Console.WriteLine("    - 'repeat what I did'");
+            Console.WriteLine("  Game Actions:");
+            Console.WriteLine("    - 'fight [target]' / 'attack [target]'");
+            Console.WriteLine("    - 'run away' / 'retreat'");
+            Console.WriteLine("    - 'follow [name]'");
+            Console.WriteLine("  Camera Control:");
+            Console.WriteLine("    - 'look left/right/up/down'");
+            Console.WriteLine("    - 'turn around'");
+            Console.WriteLine("    - 'look at [direction]'");
+            Console.WriteLine("  Utility:");
+            Console.WriteLine("    - 'click here'");
+            Console.WriteLine("    - 'press [key]'");
             Console.WriteLine("================================");
         }
 
