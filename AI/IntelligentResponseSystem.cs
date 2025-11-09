@@ -12,14 +12,27 @@ namespace AWIS.AI
     public class IntelligentResponseSystem
     {
         private readonly PersonalitySystem personality;
+        private readonly LocalLLM llm;
         private readonly List<string> conversationHistory = new();
         private readonly Dictionary<string, List<string>> responseTemplates = new();
         private readonly Random random = new();
+        private bool llmTrained = false;
 
         public IntelligentResponseSystem(PersonalitySystem personality)
         {
             this.personality = personality;
+            this.llm = new LocalLLM(embeddingSize: 128, hiddenSize: 256, numLayers: 3, learningRate: 0.001);
             InitializeResponseTemplates();
+
+            // Train LLM on helpfulness and friendship
+            Task.Run(() =>
+            {
+                Console.WriteLine("[RESPONSE] 🎓 Training LLM in background...");
+                llm.Train(epochs: 20);
+                llmTrained = true;
+                Console.WriteLine("[RESPONSE] ✅ LLM training complete!");
+                Console.WriteLine($"[RESPONSE] Helpfulness: {llm.GetHelpfulnessScore():P0}, Friendliness: {llm.GetFriendlinessScore():P0}");
+            });
         }
 
         private void InitializeResponseTemplates()
@@ -89,12 +102,33 @@ namespace AWIS.AI
         }
 
         /// <summary>
-        /// Generate an intelligent response to user input
+        /// Generate an intelligent response to user input using trained LLM
         /// </summary>
         public string GenerateResponse(string userInput, Dictionary<string, object>? context = null)
         {
             conversationHistory.Add($"User: {userInput}");
-            var response = AnalyzeAndRespond(userInput, context);
+
+            string response;
+
+            // Use LLM if trained, otherwise fall back to pattern matching
+            if (llmTrained)
+            {
+                // Generate response using trained LLM
+                var llmResponse = llm.Generate(userInput, maxTokens: 50);
+
+                // Enhance with personality and context
+                response = EnhanceLLMResponse(llmResponse, userInput, context);
+
+                // Learn from this interaction
+                var reward = CalculateHelpfulnessReward(response, userInput);
+                llm.LearnFromInteraction(userInput, response, reward, "helpfulness");
+            }
+            else
+            {
+                // Fall back to pattern matching while LLM trains
+                response = AnalyzeAndRespond(userInput, context);
+            }
+
             conversationHistory.Add($"Agent: {response}");
 
             // Keep only last 20 exchanges
@@ -104,6 +138,46 @@ namespace AWIS.AI
             }
 
             return response;
+        }
+
+        private string EnhanceLLMResponse(string llmResponse, string userInput, Dictionary<string, object>? context)
+        {
+            // Add context awareness to LLM response
+            if (context != null)
+            {
+                if (context.TryGetValue("mood", out var mood))
+                {
+                    // LLM already considers personality, just ensure it's reflected
+                    return llmResponse;
+                }
+            }
+
+            return llmResponse;
+        }
+
+        private double CalculateHelpfulnessReward(string response, string userInput)
+        {
+            double reward = 0.5; // Base reward
+
+            // Increase reward for helpful indicators
+            if (response.Contains("help") || response.Contains("assist"))
+                reward += 0.2;
+
+            if (response.Contains("!") && (response.Contains("happy") || response.Contains("glad")))
+                reward += 0.15;
+
+            if (response.Contains("you") || response.Contains("your"))
+                reward += 0.1; // User-focused
+
+            // Check if response addresses the input
+            var inputWords = userInput.ToLower().Split(' ');
+            var responseWords = response.ToLower().Split(' ');
+
+            var overlap = inputWords.Intersect(responseWords).Count();
+            if (overlap > 0)
+                reward += Math.Min(0.2, overlap * 0.05);
+
+            return Math.Clamp(reward, 0.0, 1.0);
         }
 
         private string AnalyzeAndRespond(string input, Dictionary<string, object>? context)
@@ -310,5 +384,31 @@ namespace AWIS.AI
             return $"Last {Math.Min(5, conversationHistory.Count / 2)} exchanges:\n" +
                    string.Join("\n", conversationHistory.TakeLast(10));
         }
+
+        /// <summary>
+        /// Get LLM statistics
+        /// </summary>
+        public string GetLLMStatistics()
+        {
+            if (!llmTrained)
+                return "LLM is still training...";
+
+            return $"LLM Statistics:\n" +
+                   $"  Trained: Yes\n" +
+                   $"  Helpfulness Score: {llm.GetHelpfulnessScore():P0}\n" +
+                   $"  Friendliness Score: {llm.GetFriendlinessScore():P0}\n" +
+                   $"  Vocabulary Size: {llm.GetVocabularySize()} tokens\n" +
+                   $"  Conversations: {conversationHistory.Count / 2}";
+        }
+
+        /// <summary>
+        /// Check if LLM is ready
+        /// </summary>
+        public bool IsLLMReady() => llmTrained;
+
+        /// <summary>
+        /// Get the underlying LLM for advanced operations
+        /// </summary>
+        public LocalLLM GetLLM() => llm;
     }
 }

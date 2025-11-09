@@ -261,6 +261,34 @@ namespace AWIS.AI
                 await SpeakAsync(response);
             });
 
+            // LLM commands
+            voiceSystem.RegisterHandler("how smart are you", async cmd =>
+            {
+                var stats = intelligentResponse.GetLLMStatistics();
+                await SpeakAsync(stats.Replace("\n", ". "));
+            });
+
+            voiceSystem.RegisterHandler("what have you learned", async cmd =>
+            {
+                if (intelligentResponse.IsLLMReady())
+                {
+                    var llm = intelligentResponse.GetLLM();
+                    await SpeakAsync($"I've learned {llm.GetVocabularySize()} words! " +
+                                   $"My helpfulness is at {llm.GetHelpfulnessScore():P0} and " +
+                                   $"my friendliness is at {llm.GetFriendlinessScore():P0}!");
+                }
+                else
+                {
+                    await SpeakAsync("I'm still learning! My language model is training right now.");
+                }
+            });
+
+            voiceSystem.RegisterHandler("show your progress", async cmd =>
+            {
+                var goalStats = goalSystem.GetLearningStatistics();
+                await SpeakAsync(goalStats.Replace("\n", ". "));
+            });
+
             // Conversational handler (catches everything not matched by specific handlers)
             voiceSystem.RegisterHandler("", async cmd =>
             {
