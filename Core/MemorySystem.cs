@@ -104,7 +104,7 @@ namespace AWIS.Core
             {
                 var searchStores = type.HasValue ?
                     new[] { memoryStores[type.Value] } :
-                    memoryStores.Values;
+                    memoryStores.Values.ToArray();
 
                 MemoryItem? bestMatch = null;
                 double bestScore = 0;
@@ -137,7 +137,7 @@ namespace AWIS.Core
             {
                 var searchStores = type.HasValue ?
                     new[] { memoryStores[type.Value] } :
-                    memoryStores.Values;
+                    memoryStores.Values.ToArray();
 
                 var results = new List<(MemoryItem memory, double score)>();
 

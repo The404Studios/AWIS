@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Runtime.Versioning;
 using AWIS.NLP;
 
 namespace AWIS.Core
@@ -8,6 +9,7 @@ namespace AWIS.Core
     /// <summary>
     /// Demonstration of contextual voice command system
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ContextualCommandDemo
     {
         private readonly ContextualVoiceCommandSystem commandSystem;

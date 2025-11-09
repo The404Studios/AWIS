@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.Versioning;
 
 namespace AWIS.Vision
 {
@@ -30,6 +31,7 @@ namespace AWIS.Vision
     /// <summary>
     /// Advanced computer vision system for image analysis
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class AdvancedComputerVision
     {
         private readonly int screenWidth;
@@ -308,6 +310,7 @@ namespace AWIS.Vision
     /// <summary>
     /// Simpler computer vision for basic operations
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ComputerVision
     {
         private readonly AdvancedComputerVision advanced;

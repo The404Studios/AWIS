@@ -23,6 +23,7 @@ namespace AWIS.Core
         Drop,
         Scroll,
         Hover,
+        Move,
 
         // System Control
         Start,
@@ -74,7 +75,10 @@ namespace AWIS.Core
         Abort,
         Cancel,
         Undo,
-        Help
+        Help,
+
+        // Timing
+        Wait
     }
 
     /// <summary>

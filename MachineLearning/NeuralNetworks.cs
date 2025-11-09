@@ -134,8 +134,8 @@ namespace AWIS.MachineLearning
     /// </summary>
     public class LSTMCell
     {
-        private double[,] Wf, Wi, Wc, Wo; // Weights
-        private double[] bf, bi, bc, bo;  // Biases
+        private double[,] Wf = null!, Wi = null!, Wc = null!, Wo = null!; // Weights
+        private double[] bf = null!, bi = null!, bc = null!, bo = null!;  // Biases
         private readonly int hiddenSize;
 
         public LSTMCell(int inputSize, int hiddenSize)

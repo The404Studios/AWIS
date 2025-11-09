@@ -221,7 +221,7 @@ namespace AutonomousWebIntelligence
                 .OrderByDescending(s => s.GetSuccessRate())
                 .ToList();
 
-            MetaLearningStrategy selectedStrategy = null;
+            MetaLearningStrategy? selectedStrategy = null;
 
             if (applicableStrategies.Any())
             {
@@ -447,7 +447,7 @@ namespace AutonomousWebIntelligence
             return generalization;
         }
 
-        private async Task IdentifyCrossDomainApplications(GeneralizedConcept concept)
+        private Task IdentifyCrossDomainApplications(GeneralizedConcept concept)
         {
             var allDomains = learningStrategies.Values
                 .SelectMany(s => s.ApplicableDomains)
@@ -482,6 +482,7 @@ namespace AutonomousWebIntelligence
                     crossDomainInsights.Add(insight);
                 }
             }
+            return Task.CompletedTask;
         }
 
         private async Task<string> ApplyGeneralization(GeneralizedConcept generalization, string problem, string domain)

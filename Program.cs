@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Linq;
 using AWIS.Core;
 using AWIS.NLP;
 using AWIS.MachineLearning;
+using AWIS.AI;
 
 namespace AWIS
 {
@@ -15,41 +17,49 @@ namespace AWIS
     /// </summary>
     class Program
     {
-        private static ParallelSystemCoordinator coordinator;
-        private static ParallelPerformanceMonitor performanceMonitor;
+        private static ParallelSystemCoordinator coordinator = null!;
+        private static ParallelPerformanceMonitor performanceMonitor = null!;
 
+        [SupportedOSPlatform("windows")]
         static async Task Main(string[] args)
         {
             PrintWelcomeBanner();
 
-            // Initialize parallel coordinator
+            // Run autonomous agent by default (or with --agent flag)
+            if (args.Length == 0 || (args.Length > 0 && args[0] == "--agent"))
+            {
+                await RunAutonomousAgent();
+                return;
+            }
+
+            // Initialize parallel coordinator for demos
             coordinator = new ParallelSystemCoordinator(Environment.ProcessorCount);
             performanceMonitor = new ParallelPerformanceMonitor();
 
             Console.WriteLine($"Initializing with {Environment.ProcessorCount} parallel workers...\n");
 
             // Run demonstration
-            if (args.Length > 0 && args[0] == "--demo")
+            if (args[0] == "--demo")
             {
                 await RunDemonstrationAsync();
             }
-            else if (args.Length > 0 && args[0] == "--full-demo")
+            else if (args[0] == "--full-demo")
             {
                 await SystemDemo.RunFullSystemDemo();
             }
-            else if (args.Length > 0 && args[0] == "--test-tokenizer")
+            else if (args[0] == "--test-tokenizer")
             {
                 TestTokenizer();
             }
-            else if (args.Length > 0 && args[0] == "--benchmark")
+            else if (args[0] == "--benchmark")
             {
                 await RunBenchmarkAsync();
             }
-            else if (args.Length > 0 && args[0] == "--ml-demo")
+            else if (args[0] == "--ml-demo")
             {
                 RunMLDemos();
             }
-            else
+            else if (args[0] == "--menu")
             {
                 ShowMenu();
             }
@@ -64,11 +74,71 @@ namespace AWIS
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("╔════════════════════════════════════════════════════════════════╗");
             Console.WriteLine("║          AWIS v8.0 - Advanced Artificial Intelligence          ║");
-            Console.WriteLine("║                    With Parallel Processing                    ║");
+            Console.WriteLine("║                    Autonomous Agent Mode                       ║");
             Console.WriteLine("║                      20,000+ Lines of Code                     ║");
             Console.WriteLine("╚════════════════════════════════════════════════════════════════╝");
             Console.ResetColor();
             Console.WriteLine();
+        }
+
+        [SupportedOSPlatform("windows")]
+        static async Task RunAutonomousAgent()
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Initializing Autonomous AI Agent...\n");
+            Console.ResetColor();
+
+            AutonomousAgent? agent = null;
+
+            try
+            {
+                agent = new AutonomousAgent();
+                agent.Start();
+
+                Console.WriteLine("\nAgent is now running. Type commands or speak them:");
+                Console.WriteLine("  Examples:");
+                Console.WriteLine("    - 'start recording'");
+                Console.WriteLine("    - 'stop recording'");
+                Console.WriteLine("    - 'repeat what I did'");
+                Console.WriteLine("    - 'fight that crab'");
+                Console.WriteLine("    - 'run away'");
+                Console.WriteLine("    - 'follow player'");
+                Console.WriteLine("\nType 'quit' to exit.\n");
+
+                // Main command loop
+                while (true)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write("> ");
+                    Console.ResetColor();
+
+                    var command = Console.ReadLine();
+                    if (string.IsNullOrWhiteSpace(command))
+                        continue;
+
+                    if (command.ToLower() == "quit" || command.ToLower() == "exit")
+                    {
+                        Console.WriteLine("Shutting down agent...");
+                        break;
+                    }
+
+                    // Process the command
+                    agent.ProcessCommand(command);
+
+                    await Task.Delay(100);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"\nError: {ex.Message}");
+                Console.WriteLine("Note: This mode requires Windows and proper permissions for input control.");
+                Console.ResetColor();
+            }
+            finally
+            {
+                agent?.Dispose();
+            }
         }
 
         static void ShowMenu()
