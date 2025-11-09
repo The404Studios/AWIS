@@ -16,13 +16,17 @@ namespace AWIS.AI
     /// Autonomous AI agent that runs continuously, learns from user, and executes commands
     /// </summary>
     [SupportedOSPlatform("windows")]
-    public class AutonomousAgent
+    public class AutonomousAgent : IDisposable
     {
         private readonly HumanizedInputController inputController;
         private readonly ActionRecorder actionRecorder;
         private readonly VoiceCommandSystem voiceSystem;
         private readonly AdvancedComputerVision vision;
         private readonly MemoryArchitecture memory;
+        private readonly PersonalitySystem personality;
+        private readonly GoalSystem goalSystem;
+        private readonly ApplicationLauncher appLauncher;
+        private readonly IntelligentResponseSystem intelligentResponse;
 
         private bool isRunning;
         private Task? mainLoopTask;
@@ -40,8 +44,16 @@ namespace AWIS.AI
             voiceSystem = new VoiceCommandSystem();
             vision = new AdvancedComputerVision();
             memory = new MemoryArchitecture();
+            personality = new PersonalitySystem();
+            goalSystem = new GoalSystem();
+            appLauncher = new ApplicationLauncher();
+            intelligentResponse = new IntelligentResponseSystem(personality);
             cancellationToken = new CancellationTokenSource();
             currentMode = GameMode.Idle;
+
+            Console.WriteLine($"\n[AGENT] 🤖 {personality.Name} initialized!");
+            Console.WriteLine($"[AGENT] {personality.Description}");
+            Console.WriteLine($"[AGENT] Current mood: {personality.GetMoodDescription()}\n");
 
             SetupVoiceCommands();
         }
@@ -183,6 +195,84 @@ namespace AWIS.AI
                     await inputController.MoveAxis(0.0, 0.5, sensitivity: 100);
                 else if (text.Contains("down"))
                     await inputController.MoveAxis(0.0, -0.5, sensitivity: 100);
+            });
+
+            // Vision commands
+            voiceSystem.RegisterHandler("what do you see", async cmd =>
+            {
+                await AnalyzeScreen();
+            });
+
+            voiceSystem.RegisterHandler("analyze screen", async cmd =>
+            {
+                await AnalyzeScreen();
+            });
+
+            // Application commands
+            voiceSystem.RegisterHandler("open", async cmd =>
+            {
+                var appName = ExtractParameter(cmd.Text, "open");
+                if (!string.IsNullOrEmpty(appName))
+                {
+                    var response = personality.GenerateResponse($"opening {appName}", ResponseType.Success);
+                    await SpeakAsync(response);
+                    appLauncher.LaunchApplication(appName);
+                }
+            });
+
+            voiceSystem.RegisterHandler("search for", async cmd =>
+            {
+                var query = ExtractParameter(cmd.Text, "search for");
+                if (!string.IsNullOrEmpty(query))
+                {
+                    await SpeakAsync($"Searching for {query}...");
+                    appLauncher.SearchWeb(query);
+                }
+            });
+
+            voiceSystem.RegisterHandler("play", async cmd =>
+            {
+                var gameName = ExtractParameter(cmd.Text, "play");
+                if (!string.IsNullOrEmpty(gameName))
+                {
+                    var response = personality.GenerateResponse($"launching {gameName}", ResponseType.Excitement);
+                    await SpeakAsync(response);
+                    appLauncher.LaunchGame(gameName);
+                }
+            });
+
+            // Goal commands
+            voiceSystem.RegisterHandler("what are you doing", async cmd =>
+            {
+                var currentGoal = goalSystem.GetCurrentGoal();
+                if (currentGoal != null)
+                {
+                    await SpeakAsync($"I'm working on: {currentGoal.Description}");
+                }
+                else
+                {
+                    await SpeakAsync($"Just exploring and learning! I'm {personality.GetMoodDescription()}!");
+                }
+            });
+
+            voiceSystem.RegisterHandler("tell me about yourself", async cmd =>
+            {
+                var response = intelligentResponse.GenerateResponse("who are you", null);
+                await SpeakAsync(response);
+            });
+
+            // Conversational handler (catches everything not matched by specific handlers)
+            voiceSystem.RegisterHandler("", async cmd =>
+            {
+                // This acts as a catch-all for conversational input
+                var context = new Dictionary<string, object>
+                {
+                    ["mood"] = personality.GetMoodDescription(),
+                    ["current_goal"] = goalSystem.GetCurrentGoal()?.Description ?? "exploring"
+                };
+
+                var response = intelligentResponse.GenerateResponse(cmd.Text, context);
+                await SpeakAsync(response);
             });
         }
 
@@ -345,71 +435,173 @@ namespace AWIS.AI
         }
 
         /// <summary>
-        /// Process idle mode - autonomous exploration
+        /// Process idle mode - goal-driven autonomous exploration with learning
         /// </summary>
         private async Task ProcessIdleMode()
         {
-            // Autonomous behavior: explore, look around, occasionally do actions
             var random = new Random();
-            var action = random.Next(0, 10);
 
-            switch (action)
+            // Check current goal and work towards it
+            var currentGoal = goalSystem.GetCurrentGoal();
+            if (currentGoal != null)
             {
-                case 0:
-                case 1:
-                    // Look around randomly
-                    var yaw = (random.NextDouble() - 0.5) * 2; // -1 to 1
-                    var pitch = (random.NextDouble() - 0.5) * 0.5; // Smaller range for pitch
-                    await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
-                    await Task.Delay(random.Next(1000, 3000));
-                    break;
-
-                case 2:
-                    // Move forward a bit
-                    Console.WriteLine("[AUTONOMOUS] Exploring forward...");
-                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
-                    await Task.Delay(random.Next(2000, 5000));
-                    break;
-
-                case 3:
-                    // Strafe randomly
-                    var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
-                    await inputController.HoldKey(strafeKey, random.Next(300, 800));
-                    await Task.Delay(random.Next(2000, 4000));
-                    break;
-
-                case 4:
-                    // Full look around (360 scan)
-                    Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
-                    for (int i = 0; i < 4; i++)
-                    {
-                        await inputController.MoveAxis(0.5, 0.0, sensitivity: 100, duration: 200);
-                        await Task.Delay(300);
-                    }
-                    await Task.Delay(random.Next(3000, 6000));
-                    break;
-
-                case 5:
-                    // Jump occasionally
-                    await inputController.PressKey(HumanizedInputController.VK.SPACE);
-                    await Task.Delay(random.Next(2000, 5000));
-                    break;
-
-                case 6:
-                    // Crouch and look around
-                    await inputController.PressKey(HumanizedInputController.VK.C);
-                    await Task.Delay(500);
-                    await inputController.MoveAxis(1.0, 0.0, sensitivity: 120, duration: 300);
-                    await Task.Delay(1000);
-                    await inputController.PressKey(HumanizedInputController.VK.C); // Uncrouch
-                    await Task.Delay(random.Next(3000, 6000));
-                    break;
-
-                default:
-                    // Just idle and observe
-                    await Task.Delay(random.Next(1500, 4000));
-                    break;
+                await WorkTowardsGoal(currentGoal);
+                return;
             }
+
+            // No active goal - generate one autonomously
+            if (random.Next(0, 20) == 0) // 5% chance each cycle
+            {
+                goalSystem.GenerateAutonomousGoal();
+                var response = personality.GenerateResponse("setting new goal", ResponseType.Excitement);
+                await SpeakAsync(response);
+            }
+
+            // Autonomous behavior: explore, look around, occasionally do actions
+            var action = random.Next(0, 12); // Increased variety
+
+            try
+            {
+                var success = false;
+                switch (action)
+                {
+                    case 0:
+                    case 1:
+                        // Look around randomly
+                        var yaw = (random.NextDouble() - 0.5) * 2; // -1 to 1
+                        var pitch = (random.NextDouble() - 0.5) * 0.5; // Smaller range for pitch
+                        await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
+                        await Task.Delay(random.Next(1000, 3000));
+                        success = true;
+                        personality.LearnFromExperience(ExperienceType.Exploration, true);
+                        break;
+
+                    case 2:
+                        // Move forward a bit
+                        Console.WriteLine("[AUTONOMOUS] Exploring forward...");
+                        await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
+                        await Task.Delay(random.Next(2000, 5000));
+                        success = true;
+                        personality.LearnFromExperience(ExperienceType.Exploration, true);
+                        break;
+
+                    case 3:
+                        // Strafe randomly
+                        var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
+                        await inputController.HoldKey(strafeKey, random.Next(300, 800));
+                        await Task.Delay(random.Next(2000, 4000));
+                        success = true;
+                        break;
+
+                    case 4:
+                        // Full look around (360 scan)
+                        Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
+                        for (int i = 0; i < 4; i++)
+                        {
+                            await inputController.MoveAxis(0.5, 0.0, sensitivity: 100, duration: 200);
+                            await Task.Delay(300);
+                        }
+                        await Task.Delay(random.Next(3000, 6000));
+                        success = true;
+                        break;
+
+                    case 5:
+                        // Jump occasionally
+                        await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                        await Task.Delay(random.Next(2000, 5000));
+                        success = true;
+                        break;
+
+                    case 6:
+                        // Crouch and look around
+                        await inputController.PressKey(HumanizedInputController.VK.C);
+                        await Task.Delay(500);
+                        await inputController.MoveAxis(1.0, 0.0, sensitivity: 120, duration: 300);
+                        await Task.Delay(1000);
+                        await inputController.PressKey(HumanizedInputController.VK.C); // Uncrouch
+                        await Task.Delay(random.Next(3000, 6000));
+                        success = true;
+                        break;
+
+                    case 7:
+                        // Analyze screen occasionally
+                        await AnalyzeScreen();
+                        success = true;
+                        break;
+
+                    case 8:
+                        // Say something based on mood
+                        if (random.Next(0, 5) == 0) // 20% when selected
+                        {
+                            var mood = personality.GetMoodDescription();
+                            await SpeakAsync($"I'm {mood} and learning so much!");
+                        }
+                        await Task.Delay(random.Next(2000, 4000));
+                        success = true;
+                        break;
+
+                    default:
+                        // Just idle and observe
+                        await Task.Delay(random.Next(1500, 4000));
+                        success = true;
+                        break;
+                }
+
+                // Learn from the experience
+                if (success)
+                {
+                    personality.LearnFromExperience(ExperienceType.Exploration, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AUTONOMOUS] Error during action: {ex.Message}");
+                personality.LearnFromExperience(ExperienceType.Exploration, false);
+            }
+        }
+
+        private async Task WorkTowardsGoal(Goal goal)
+        {
+            Console.WriteLine($"[GOAL] Working on: {goal.Description}");
+
+            var random = new Random();
+            var progress = goalSystem.GetGoalProgress(goal.Id);
+
+            // Simple goal execution based on goal ID patterns
+            if (goal.Id.Contains("explore"))
+            {
+                await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(800, 1500));
+                await inputController.MoveAxis(random.NextDouble() - 0.5, 0, sensitivity: 100, duration: 150);
+
+                if (progress > 0.8)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
+                }
+            }
+            else if (goal.Id.Contains("learn") || goal.Id.Contains("practice"))
+            {
+                // Practice controls
+                await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                await Task.Delay(300);
+                await inputController.MoveAxis(0.5, 0.3, sensitivity: 120, duration: 200);
+
+                if (progress > 0.7)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
+                }
+            }
+            else
+            {
+                // Generic goal progress
+                await Task.Delay(random.Next(1000, 2000));
+
+                if (progress > 0.9)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
+                }
+            }
+
+            await Task.Delay(random.Next(500, 1500));
         }
 
         /// <summary>
@@ -515,6 +707,44 @@ namespace AWIS.AI
             Console.WriteLine($"[AGENT] {text}");
             voiceSystem.Speak(text);
             await Task.Delay(10);
+        }
+
+        private async Task AnalyzeScreen()
+        {
+            try
+            {
+                await SpeakAsync("Let me look at the screen...");
+
+                var screenshot = vision.CaptureScreen();
+                var analysis = vision.AnalyzeScreen(screenshot);
+
+                // Simple description based on what we can detect
+                var description = $"I can see the screen. ";
+                description += analysis.DetectedObjects.Count > 0
+                    ? $"I detected {analysis.DetectedObjects.Count} objects. "
+                    : "I'm analyzing the visual elements. ";
+
+                var response = personality.GenerateResponse(description, ResponseType.Discovery);
+                await SpeakAsync(response);
+
+                screenshot.Dispose();
+            }
+            catch (Exception ex)
+            {
+                await SpeakAsync($"I'm having trouble analyzing the screen right now. {ex.Message}");
+            }
+        }
+
+        private string? ExtractParameter(string text, string command)
+        {
+            text = text.ToLower().Trim();
+            command = command.ToLower().Trim();
+
+            var index = text.IndexOf(command);
+            if (index < 0) return null;
+
+            var afterCommand = text[(index + command.Length)..].Trim();
+            return string.IsNullOrWhiteSpace(afterCommand) ? null : afterCommand;
         }
 
         public void Dispose()

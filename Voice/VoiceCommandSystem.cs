@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Speech.Recognition;
+using System.Speech.Synthesis;
 using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
@@ -46,6 +47,7 @@ namespace AWIS.Voice
         private Thread? processingThread;
         private readonly CancellationTokenSource cancellationToken = new();
         private SpeechRecognitionEngine? speechRecognizer;
+        private SpeechSynthesizer? speechSynthesizer;
         private bool voiceListeningEnabled = false;
 
         // Statistics
@@ -57,6 +59,7 @@ namespace AWIS.Voice
         {
             InitializeCommandMappings();
             InitializeSpeechRecognition();
+            InitializeTextToSpeech();
         }
 
         private void InitializeCommandMappings()
@@ -111,6 +114,14 @@ namespace AWIS.Voice
         {
             try
             {
+                // List available audio devices
+                Console.WriteLine("[VOICE] Available audio input devices:");
+                var recognizers = SpeechRecognitionEngine.InstalledRecognizers();
+                foreach (var info in recognizers)
+                {
+                    Console.WriteLine($"  - {info.Name} ({info.Culture.Name})");
+                }
+
                 speechRecognizer = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
 
                 // Build grammar with common commands
@@ -119,7 +130,9 @@ namespace AWIS.Voice
                     "start recording", "stop recording", "repeat what I did",
                     "fight", "attack", "run away", "retreat", "follow",
                     "click here", "press", "look left", "look right",
-                    "look up", "look down", "turn around", "stop", "quit"
+                    "look up", "look down", "turn around", "stop", "quit",
+                    "open", "search for", "play", "what do you see",
+                    "analyze screen", "find", "tell me about"
                 });
 
                 var gb = new GrammarBuilder();
@@ -143,6 +156,35 @@ namespace AWIS.Voice
                 Console.WriteLine($"[VOICE] Failed to initialize speech recognition: {ex.Message}");
                 Console.WriteLine("[VOICE] Voice commands will only work via text input.");
                 speechRecognizer = null;
+            }
+        }
+
+        private void InitializeTextToSpeech()
+        {
+            try
+            {
+                speechSynthesizer = new SpeechSynthesizer();
+
+                // List available voices
+                Console.WriteLine("[VOICE] Available TTS voices:");
+                foreach (var voice in speechSynthesizer.GetInstalledVoices())
+                {
+                    var info = voice.VoiceInfo;
+                    Console.WriteLine($"  - {info.Name} ({info.Gender}, {info.Age}) [{info.Culture.Name}]");
+                }
+
+                // Configure voice settings
+                speechSynthesizer.SelectVoiceByHints(VoiceGender.Female, VoiceAge.Adult);
+                speechSynthesizer.Volume = 100;
+                speechSynthesizer.Rate = 0; // Normal speed
+
+                Console.WriteLine($"[VOICE] Selected voice: {speechSynthesizer.Voice.Name}");
+                Console.WriteLine("[VOICE] Text-to-speech initialized successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VOICE] Failed to initialize TTS: {ex.Message}");
+                speechSynthesizer = null;
             }
         }
 
@@ -388,11 +430,43 @@ namespace AWIS.Voice
         }
 
         /// <summary>
-        /// Speaks text (simulated)
+        /// Speaks text using TTS
         /// </summary>
         public void Speak(string text)
         {
-            Console.WriteLine($"[Voice Output]: {text}");
+            Console.WriteLine($"[🗣️ AGENT]: {text}");
+
+            if (speechSynthesizer != null)
+            {
+                try
+                {
+                    speechSynthesizer.SpeakAsync(text);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[VOICE] TTS error: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Speaks text synchronously
+        /// </summary>
+        public void SpeakSync(string text)
+        {
+            Console.WriteLine($"[🗣️ AGENT]: {text}");
+
+            if (speechSynthesizer != null)
+            {
+                try
+                {
+                    speechSynthesizer.Speak(text);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[VOICE] TTS error: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -423,6 +497,11 @@ namespace AWIS.Voice
                 speechRecognizer.Dispose();
             }
 
+            if (speechSynthesizer != null)
+            {
+                speechSynthesizer.Dispose();
+            }
+
             cancellationToken.Dispose();
             GC.SuppressFinalize(this);
         }
@@ -435,24 +514,5 @@ namespace AWIS.Voice
         public int TotalFailed { get; set; }
         public double SuccessRate { get; set; }
         public int QueuedCommands { get; set; }
-    }
-
-    /// <summary>
-    /// Simulated speech synthesizer
-    /// </summary>
-    public class SpeechSynthesizer
-    {
-        public int Volume { get; set; } = 100;
-        public int Rate { get; set; } = 0;
-
-        public void Speak(string text)
-        {
-            Console.WriteLine($"[TTS Volume:{Volume} Rate:{Rate}]: {text}");
-        }
-
-        public void SpeakAsync(string text)
-        {
-            Task.Run(() => Speak(text));
-        }
     }
 }
