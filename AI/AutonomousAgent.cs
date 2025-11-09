@@ -36,11 +36,15 @@ namespace AWIS.AI
         private readonly PriorityRegisterSystem prioritySystem;
         private readonly DebugOverlay debugOverlay;
 
+        // Vision system
+        private readonly VisionLoop visionLoop;
+
         private bool isRunning;
         private Task? mainLoopTask;
         private readonly CancellationTokenSource cancellationToken;
         private int recentFailures = 0;
         private bool autonomousModeEnabled = false; // Disabled by default - wait for user commands
+        private DateTime lastActionTime = DateTime.UtcNow;
 
         // Game command state
         private string? currentTarget;
@@ -68,12 +72,16 @@ namespace AWIS.AI
             prioritySystem = new PriorityRegisterSystem(executionCycle);
             debugOverlay = new DebugOverlay(executionCycle, prioritySystem);
 
+            // Initialize 60fps vision system with Tesseract OCR
+            visionLoop = new VisionLoop();
+
             Console.WriteLine($"\n[AGENT] 🤖 {personality.Name} initialized!");
             Console.WriteLine($"[AGENT] {personality.Description}");
             Console.WriteLine($"[AGENT] Current mood: {personality.GetMoodDescription()}\n");
             Console.WriteLine($"[AGENT] 🎯 Task execution cycle system active");
             Console.WriteLine($"[AGENT] 📊 12-level priority registers ready");
-            Console.WriteLine($"[AGENT] 🔍 Debug overlay initialized\n");
+            Console.WriteLine($"[AGENT] 🔍 Debug overlay initialized");
+            Console.WriteLine($"[AGENT] 👁️  60fps vision system ready\n");
 
             // Load saved knowledge asynchronously
             Task.Run(async () => await LoadSavedKnowledgeAsync());
@@ -381,6 +389,36 @@ namespace AWIS.AI
                 await SpeakAsync("Okay, I'll stop moving around.");
             });
 
+            // Vision control
+            voiceSystem.RegisterHandler("what do you see", async cmd =>
+            {
+                var state = visionLoop.GetCurrentState();
+                var textCount = state.TextRegions.Count;
+                var objectCount = state.Objects.Count;
+
+                if (textCount == 0 && objectCount == 0)
+                {
+                    await SpeakAsync("I don't see any text or objects right now.");
+                }
+                else
+                {
+                    var response = $"I see {textCount} text regions and {objectCount} objects. ";
+                    if (textCount > 0)
+                    {
+                        var firstText = state.TextRegions[0].Text;
+                        response += $"The first text says: {firstText}";
+                    }
+                    await SpeakAsync(response);
+                }
+            });
+
+            voiceSystem.RegisterHandler("show vision stats", async cmd =>
+            {
+                var stats = visionLoop.GetStatistics();
+                Console.WriteLine($"[VISION] {stats}");
+                await SpeakAsync($"Vision statistics displayed");
+            });
+
             // Goal creation from voice commands
             voiceSystem.RegisterHandler("hey do this", async cmd =>
             {
@@ -468,6 +506,10 @@ namespace AWIS.AI
             if (isRunning) return;
 
             isRunning = true;
+
+            // Start vision loop first
+            visionLoop.Start();
+
             voiceSystem.StartProcessing();
             voiceSystem.StartVoiceListening(); // Enable microphone
             mainLoopTask = Task.Run(() => MainLoop(cancellationToken.Token));
@@ -510,6 +552,17 @@ namespace AWIS.AI
             {
                 try
                 {
+                    // Check if we have work to do
+                    var currentGoal = goalSystem.GetCurrentGoal();
+                    bool hasWork = currentGoal != null || autonomousModeEnabled || currentMode != GameMode.Idle;
+
+                    if (!hasWork)
+                    {
+                        // NO work to do - sleep for longer to avoid spamming cycles
+                        await Task.Delay(500, token); // Sleep half a second when idle
+                        continue;
+                    }
+
                     // Process based on current mode
                     switch (currentMode)
                     {
@@ -532,8 +585,12 @@ namespace AWIS.AI
                             break;
                     }
 
-                    // Small delay to prevent CPU overuse
-                    await Task.Delay(50);
+                    // Delay between actions to prevent spam
+                    await Task.Delay(1000, token); // 1 second between actions
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Normal cancellation
                 }
                 catch (Exception ex)
                 {
@@ -629,8 +686,6 @@ namespace AWIS.AI
         /// </summary>
         private async Task ProcessIdleMode()
         {
-            var random = new Random();
-
             // Check current goal and work towards it
             var currentGoal = goalSystem.GetCurrentGoal();
             if (currentGoal != null)
@@ -642,81 +697,30 @@ namespace AWIS.AI
             // Only do autonomous actions if explicitly enabled
             if (!autonomousModeEnabled)
             {
-                await Task.Delay(100); // Just wait for user commands
-                return;
+                // NOT doing autonomous actions - just wait
+                return; // Main loop will handle the sleep
             }
 
-            // No active goal - generate one autonomously (only if autonomous mode enabled)
-            if (random.Next(0, 20) == 0) // 5% chance each cycle
+            // Autonomous mode: use vision to explore
+            Console.WriteLine("[AUTONOMOUS] Using vision to explore...");
+
+            var state = visionLoop.GetCurrentState();
+            Console.WriteLine($"[VISION] Saw {state.TextRegions.Count} text regions, {state.Objects.Count} objects");
+
+            // Generate a goal based on what we see
+            var random = new Random();
+            if (state.TextRegions.Count > 0 && random.Next(0, 3) == 0)
+            {
+                // Found text - create a goal to investigate
+                var randomText = state.TextRegions[random.Next(state.TextRegions.Count)];
+                goalSystem.AddUserGoal($"investigate text: {randomText.Text}");
+                await SpeakAsync($"I see text that says {randomText.Text}. Let me investigate!");
+            }
+            else if (random.Next(0, 10) == 0) // 10% chance to generate autonomous goal
             {
                 goalSystem.GenerateAutonomousGoal();
                 var response = personality.GenerateResponse("setting new goal", ResponseType.Excitement);
                 await SpeakAsync(response);
-            }
-
-            // Use advanced decision maker to choose intelligent actions
-            var context = new DecisionContext
-            {
-                CurrentState = "idle",
-                HasActiveGoal = currentGoal != null,
-                RecentFailures = recentFailures,
-                ExplorationDesire = personality.Curiosity,
-                SocialInteraction = false
-            };
-
-            var decision = decisionMaker.MakeDecision(context);
-            Console.WriteLine($"[DECISION] {decision.Reasoning}");
-
-            // Determine priority register based on decision confidence and failures
-            var priorityRegister = CalculatePriorityRegister(decision.Confidence, recentFailures);
-
-            // Schedule task through priority system with cycle checking
-            prioritySystem.ScheduleTask(
-                $"action_{decision.Action}_{DateTime.UtcNow.Ticks}",
-                async () =>
-                {
-                    var success = await ExecuteDecision(decision.Action, random);
-
-                    // Create evidence for task validation
-                    var evidence = new TaskEvidence
-                    {
-                        Data = new Dictionary<string, object>
-                        {
-                            ["action"] = decision.Action,
-                            ["success"] = success,
-                            ["timestamp"] = DateTime.UtcNow
-                        },
-                        RequiredFields = new List<string> { "action", "success" },
-                        Confidence = success ? 0.9 : 0.3,
-                        Description = $"Executed {decision.Action}"
-                    };
-
-                    return evidence;
-                },
-                priorityRegister,
-                maxRetries: 2
-            );
-
-            // Execute next highest priority task
-            var result = await prioritySystem.ExecuteNextTask();
-
-            if (result != null)
-            {
-                var success = result.Evidence?.Data.GetValueOrDefault("success") is bool s && s;
-
-                // Learn from outcome
-                decisionMaker.LearnFromOutcome(decision.Action, success);
-
-                if (success)
-                {
-                    recentFailures = Math.Max(0, recentFailures - 1);
-                    personality.LearnFromExperience(ExperienceType.Exploration, true);
-                }
-                else
-                {
-                    recentFailures++;
-                    personality.LearnFromExperience(ExperienceType.Exploration, false);
-                }
             }
         }
 
@@ -804,124 +808,110 @@ namespace AWIS.AI
         {
             Console.WriteLine($"[GOAL] Working on: {goal.Description}");
 
-            var random = new Random();
             var progress = goalSystem.GetGoalProgress(goal.Id);
-
-            // Analyze the goal description to determine appropriate actions
             var description = goal.Description.ToLower();
 
-            // Movement-related goals
-            if (description.Contains("move") || description.Contains("go") || description.Contains("walk") ||
-                description.Contains("run") || description.Contains("forward") || description.Contains("explore"))
-            {
-                Console.WriteLine($"[GOAL] Executing movement action for: {goal.Description}");
-                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(1000, 2000));
-                await inputController.MoveAxis((random.NextDouble() - 0.5) * 0.5, 0, sensitivity: 100, duration: 150);
-                await Task.Delay(random.Next(500, 1000));
+            // Get current vision state
+            var state = visionLoop.GetCurrentState();
+            Console.WriteLine($"[VISION] Current view: {state.TextRegions.Count} text regions, {state.Objects.Count} objects");
 
-                if (progress > 0.6)
+            // Investigate text goals
+            if (description.Contains("investigate") || description.Contains("read"))
+            {
+                // Extract what text we're looking for
+                var targetText = goal.Description.Replace("investigate text:", "").Replace("read", "").Trim();
+
+                var foundText = state.TextRegions.Find(r =>
+                    r.Text.Contains(targetText, StringComparison.OrdinalIgnoreCase));
+
+                if (foundText != null)
                 {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
+                    Console.WriteLine($"[VISION-GOAL] Found text '{foundText.Text}' at ({foundText.BoundingBox.X}, {foundText.BoundingBox.Y})");
+
+                    // Click on the text
+                    var centerX = foundText.BoundingBox.X + foundText.BoundingBox.Width / 2;
+                    var centerY = foundText.BoundingBox.Y + foundText.BoundingBox.Height / 2;
+
+                    await inputController.MoveMouse(centerX, centerY);
+                    await Task.Delay(500);
+                    await inputController.LeftClick();
+
+                    await SpeakAsync($"I clicked on {foundText.Text}");
+                    goalSystem.CompleteGoal(goal.Id, true, 0.9);
+                }
+                else
+                {
+                    Console.WriteLine($"[VISION-GOAL] Text not found, waiting for it to appear...");
+                    if (progress > 0.8)
+                    {
+                        goalSystem.CompleteGoal(goal.Id, false, 0.3);
+                        await SpeakAsync($"I couldn't find that text on screen");
+                    }
                 }
             }
-            // Combat-related goals
-            else if (description.Contains("fight") || description.Contains("attack") || description.Contains("combat") ||
-                     description.Contains("enemy") || description.Contains("target") || description.Contains("kill"))
+            // Click/Find buttons
+            else if (description.Contains("click") || description.Contains("button") || description.Contains("press"))
             {
-                Console.WriteLine($"[GOAL] Executing combat action for: {goal.Description}");
-                // Look around for targets
-                await inputController.MoveAxis(0.3, 0, sensitivity: 120, duration: 200);
-                await Task.Delay(200);
-                // Simulate attack
-                await inputController.LeftClick();
-                await Task.Delay(500);
+                var buttons = state.TextRegions.FindAll(r => r.Type == "Button");
+                Console.WriteLine($"[VISION-GOAL] Found {buttons.Count} buttons on screen");
 
-                if (progress > 0.5)
+                if (buttons.Count > 0)
                 {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
+                    // Find matching button
+                    var targetButton = buttons.Find(b =>
+                        goal.Description.Contains(b.Text, StringComparison.OrdinalIgnoreCase)) ?? buttons[0];
+
+                    Console.WriteLine($"[VISION-GOAL] Clicking button: {targetButton.Text}");
+
+                    var centerX = targetButton.BoundingBox.X + targetButton.BoundingBox.Width / 2;
+                    var centerY = targetButton.BoundingBox.Y + targetButton.BoundingBox.Height / 2;
+
+                    await inputController.MoveMouse(centerX, centerY);
+                    await Task.Delay(300);
+                    await inputController.LeftClick();
+
+                    await SpeakAsync($"Clicked {targetButton.Text}");
+                    goalSystem.CompleteGoal(goal.Id, true, 0.9);
+                }
+                else if (progress > 0.7)
+                {
+                    goalSystem.CompleteGoal(goal.Id, false, 0.4);
                 }
             }
-            // Search/Find goals
-            else if (description.Contains("find") || description.Contains("search") || description.Contains("look for") ||
-                     description.Contains("locate"))
+            // Find/Search goals - look for text on screen
+            else if (description.Contains("find") || description.Contains("search") || description.Contains("locate"))
             {
-                Console.WriteLine($"[GOAL] Executing search action for: {goal.Description}");
-                // Look around 360 degrees
-                for (int i = 0; i < 2; i++)
-                {
-                    await inputController.MoveAxis(0.5, 0, sensitivity: 100, duration: 300);
-                    await Task.Delay(200);
-                }
-                // Move forward while searching
-                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(800, 1500));
+                Console.WriteLine($"[VISION-GOAL] Searching for items on screen...");
 
-                if (progress > 0.4)
+                if (state.TextRegions.Count > 0)
                 {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
+                    var findings = string.Join(", ", state.TextRegions.Take(5).Select(r => r.Text));
+                    Console.WriteLine($"[VISION-GOAL] I can see: {findings}");
+                    await SpeakAsync($"I found: {findings}");
+                    goalSystem.CompleteGoal(goal.Id, true, 0.8);
+                }
+                else if (progress > 0.6)
+                {
+                    await SpeakAsync("I don't see much on this screen");
+                    goalSystem.CompleteGoal(goal.Id, false, 0.5);
                 }
             }
-            // Learning/Practice goals
-            else if (description.Contains("learn") || description.Contains("practice") || description.Contains("train") ||
-                     description.Contains("improve"))
-            {
-                Console.WriteLine($"[GOAL] Executing practice action for: {goal.Description}");
-                // Practice various controls
-                await inputController.PressKey(HumanizedInputController.VK.SPACE);
-                await Task.Delay(300);
-                await inputController.MoveAxis(0.5, 0.3, sensitivity: 120, duration: 200);
-                await Task.Delay(300);
-
-                var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
-                await inputController.PressKey(strafeKey, 500);
-
-                if (progress > 0.6)
-                {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
-                }
-            }
-            // Collect/Gather goals
-            else if (description.Contains("collect") || description.Contains("gather") || description.Contains("get") ||
-                     description.Contains("pick up") || description.Contains("take"))
-            {
-                Console.WriteLine($"[GOAL] Executing collection action for: {goal.Description}");
-                // Move to items and interact
-                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1000));
-                await Task.Delay(300);
-                await inputController.PressKey(HumanizedInputController.VK.E); // Common interact key
-
-                if (progress > 0.5)
-                {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
-                }
-            }
-            // Default: Use advanced decision maker
+            // Default: report what we see
             else
             {
-                Console.WriteLine($"[GOAL] Using intelligent decision making for: {goal.Description}");
+                Console.WriteLine($"[VISION-GOAL] Using vision to accomplish: {goal.Description}");
 
-                // Use decision maker to choose an action
-                var context = new DecisionContext
+                if (state.TextRegions.Count > 0)
                 {
-                    CurrentState = "working_on_goal",
-                    HasActiveGoal = true,
-                    RecentFailures = recentFailures,
-                    ExplorationDesire = personality.Curiosity,
-                    SocialInteraction = false
-                };
+                    var firstText = state.TextRegions[0].Text;
+                    Console.WriteLine($"[VISION-GOAL] I see text: {firstText}");
+                }
 
-                var decision = decisionMaker.MakeDecision(context);
-                Console.WriteLine($"[DECISION] {decision.Reasoning}");
-
-                var success = await ExecuteDecision(decision.Action, random);
-                decisionMaker.LearnFromOutcome(decision.Action, success);
-
-                if (progress > 0.7)
+                if (progress > 0.8)
                 {
-                    goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
+                    goalSystem.CompleteGoal(goal.Id, true, 0.7);
                 }
             }
-
-            await Task.Delay(random.Next(300, 800));
         }
 
         /// <summary>
@@ -1146,6 +1136,7 @@ namespace AWIS.AI
             Task.Run(async () => await SaveKnowledgeAsync()).Wait(5000);
 
             Stop();
+            visionLoop.Dispose();
             debugOverlay.Dispose();
             voiceSystem.Dispose();
             cancellationToken.Dispose();
