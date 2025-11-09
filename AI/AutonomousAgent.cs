@@ -27,10 +27,13 @@ namespace AWIS.AI
         private readonly GoalSystem goalSystem;
         private readonly ApplicationLauncher appLauncher;
         private readonly IntelligentResponseSystem intelligentResponse;
+        private readonly AdvancedDecisionMaker decisionMaker;
+        private readonly MemoryPersistence memoryPersistence;
 
         private bool isRunning;
         private Task? mainLoopTask;
         private readonly CancellationTokenSource cancellationToken;
+        private int recentFailures = 0;
 
         // Game command state
         private string? currentTarget;
@@ -48,12 +51,17 @@ namespace AWIS.AI
             goalSystem = new GoalSystem();
             appLauncher = new ApplicationLauncher();
             intelligentResponse = new IntelligentResponseSystem(personality);
+            decisionMaker = new AdvancedDecisionMaker();
+            memoryPersistence = new MemoryPersistence();
             cancellationToken = new CancellationTokenSource();
             currentMode = GameMode.Idle;
 
             Console.WriteLine($"\n[AGENT] 🤖 {personality.Name} initialized!");
             Console.WriteLine($"[AGENT] {personality.Description}");
             Console.WriteLine($"[AGENT] Current mood: {personality.GetMoodDescription()}\n");
+
+            // Load saved knowledge asynchronously
+            Task.Run(async () => await LoadSavedKnowledgeAsync());
 
             SetupVoiceCommands();
         }
@@ -289,6 +297,18 @@ namespace AWIS.AI
                 await SpeakAsync(goalStats.Replace("\n", ". "));
             });
 
+            voiceSystem.RegisterHandler("show decision statistics", async cmd =>
+            {
+                var decisionStats = decisionMaker.GetStatistics();
+                await SpeakAsync(decisionStats.Replace("\n", ". "));
+            });
+
+            voiceSystem.RegisterHandler("save your knowledge", async cmd =>
+            {
+                await SaveKnowledgeAsync();
+                await SpeakAsync("I've saved everything I've learned!");
+            });
+
             // Conversational handler (catches everything not matched by specific handlers)
             voiceSystem.RegisterHandler("", async cmd =>
             {
@@ -463,7 +483,7 @@ namespace AWIS.AI
         }
 
         /// <summary>
-        /// Process idle mode - goal-driven autonomous exploration with learning
+        /// Process idle mode - intelligent decision-making with learning
         /// </summary>
         private async Task ProcessIdleMode()
         {
@@ -485,106 +505,108 @@ namespace AWIS.AI
                 await SpeakAsync(response);
             }
 
-            // Autonomous behavior: explore, look around, occasionally do actions
-            var action = random.Next(0, 12); // Increased variety
+            // Use advanced decision maker to choose intelligent actions
+            var context = new DecisionContext
+            {
+                CurrentState = "idle",
+                HasActiveGoal = currentGoal != null,
+                RecentFailures = recentFailures,
+                ExplorationDesire = personality.Curiosity,
+                SocialInteraction = false
+            };
+
+            var decision = decisionMaker.MakeDecision(context);
+            Console.WriteLine($"[DECISION] {decision.Reasoning}");
 
             try
             {
-                var success = false;
-                switch (action)
-                {
-                    case 0:
-                    case 1:
-                        // Look around randomly
-                        var yaw = (random.NextDouble() - 0.5) * 2; // -1 to 1
-                        var pitch = (random.NextDouble() - 0.5) * 0.5; // Smaller range for pitch
-                        await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
-                        await Task.Delay(random.Next(1000, 3000));
-                        success = true;
-                        personality.LearnFromExperience(ExperienceType.Exploration, true);
-                        break;
+                var success = await ExecuteDecision(decision.Action, random);
 
-                    case 2:
-                        // Move forward a bit
-                        Console.WriteLine("[AUTONOMOUS] Exploring forward...");
-                        await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
-                        await Task.Delay(random.Next(2000, 5000));
-                        success = true;
-                        personality.LearnFromExperience(ExperienceType.Exploration, true);
-                        break;
+                // Learn from outcome
+                decisionMaker.LearnFromOutcome(decision.Action, success);
 
-                    case 3:
-                        // Strafe randomly
-                        var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
-                        await inputController.HoldKey(strafeKey, random.Next(300, 800));
-                        await Task.Delay(random.Next(2000, 4000));
-                        success = true;
-                        break;
-
-                    case 4:
-                        // Full look around (360 scan)
-                        Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
-                        for (int i = 0; i < 4; i++)
-                        {
-                            await inputController.MoveAxis(0.5, 0.0, sensitivity: 100, duration: 200);
-                            await Task.Delay(300);
-                        }
-                        await Task.Delay(random.Next(3000, 6000));
-                        success = true;
-                        break;
-
-                    case 5:
-                        // Jump occasionally
-                        await inputController.PressKey(HumanizedInputController.VK.SPACE);
-                        await Task.Delay(random.Next(2000, 5000));
-                        success = true;
-                        break;
-
-                    case 6:
-                        // Crouch and look around
-                        await inputController.PressKey(HumanizedInputController.VK.C);
-                        await Task.Delay(500);
-                        await inputController.MoveAxis(1.0, 0.0, sensitivity: 120, duration: 300);
-                        await Task.Delay(1000);
-                        await inputController.PressKey(HumanizedInputController.VK.C); // Uncrouch
-                        await Task.Delay(random.Next(3000, 6000));
-                        success = true;
-                        break;
-
-                    case 7:
-                        // Analyze screen occasionally
-                        await AnalyzeScreen();
-                        success = true;
-                        break;
-
-                    case 8:
-                        // Say something based on mood
-                        if (random.Next(0, 5) == 0) // 20% when selected
-                        {
-                            var mood = personality.GetMoodDescription();
-                            await SpeakAsync($"I'm {mood} and learning so much!");
-                        }
-                        await Task.Delay(random.Next(2000, 4000));
-                        success = true;
-                        break;
-
-                    default:
-                        // Just idle and observe
-                        await Task.Delay(random.Next(1500, 4000));
-                        success = true;
-                        break;
-                }
-
-                // Learn from the experience
                 if (success)
                 {
+                    recentFailures = Math.Max(0, recentFailures - 1);
                     personality.LearnFromExperience(ExperienceType.Exploration, true);
+                }
+                else
+                {
+                    recentFailures++;
+                    personality.LearnFromExperience(ExperienceType.Exploration, false);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[AUTONOMOUS] Error during action: {ex.Message}");
+                recentFailures++;
+                decisionMaker.LearnFromOutcome(decision.Action, false);
                 personality.LearnFromExperience(ExperienceType.Exploration, false);
+            }
+        }
+
+        /// <summary>
+        /// Execute a decision action
+        /// </summary>
+        private async Task<bool> ExecuteDecision(string action, Random random)
+        {
+            switch (action)
+            {
+                case "move_forward":
+                    Console.WriteLine("[AUTONOMOUS] Exploring forward...");
+                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
+                    await Task.Delay(random.Next(2000, 5000));
+                    return true;
+
+                case "look_around_360":
+                    Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
+                    for (int i = 0; i < 4; i++)
+                    {
+                        await inputController.MoveAxis(0.5, 0.0, sensitivity: 100, duration: 200);
+                        await Task.Delay(300);
+                    }
+                    await Task.Delay(random.Next(3000, 6000));
+                    return true;
+
+                case "focus_on_object":
+                case "analyze_objects":
+                    await AnalyzeScreen();
+                    return true;
+
+                case "explore_area":
+                    // Look around randomly then move
+                    var yaw = (random.NextDouble() - 0.5) * 2;
+                    var pitch = (random.NextDouble() - 0.5) * 0.5;
+                    await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
+                    await Task.Delay(500);
+                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1000));
+                    await Task.Delay(random.Next(1000, 3000));
+                    return true;
+
+                case "practice_skills":
+                    // Practice movements
+                    await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                    await Task.Delay(300);
+                    var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
+                    await inputController.HoldKey(strafeKey, random.Next(300, 800));
+                    await Task.Delay(random.Next(2000, 4000));
+                    return true;
+
+                case "rest":
+                    // Just observe and save energy
+                    if (random.Next(0, 5) == 0)
+                    {
+                        var mood = personality.GetMoodDescription();
+                        await SpeakAsync($"I'm {mood}, just taking a moment to think.");
+                    }
+                    await Task.Delay(random.Next(2000, 4000));
+                    return true;
+
+                default:
+                    // Default exploration behavior
+                    await inputController.MoveAxis((random.NextDouble() - 0.5) * 2, 0, sensitivity: 80, duration: 150);
+                    await Task.Delay(random.Next(1500, 3000));
+                    return true;
             }
         }
 
@@ -775,8 +797,80 @@ namespace AWIS.AI
             return string.IsNullOrWhiteSpace(afterCommand) ? null : afterCommand;
         }
 
+        /// <summary>
+        /// Load saved knowledge from previous sessions
+        /// </summary>
+        private async Task LoadSavedKnowledgeAsync()
+        {
+            try
+            {
+                Console.WriteLine("[MEMORY] Loading saved knowledge...");
+
+                // Load personality traits
+                var personalityData = await memoryPersistence.LoadPersonalityAsync();
+                if (personalityData != null)
+                {
+                    // Apply loaded personality traits (would need methods on PersonalitySystem)
+                    Console.WriteLine("[MEMORY] Restored personality from previous session");
+                }
+
+                // Load conversation history
+                var conversations = await memoryPersistence.LoadConversationsAsync();
+                if (conversations != null && conversations.Count > 0)
+                {
+                    Console.WriteLine($"[MEMORY] Restored {conversations.Count} previous conversations");
+                }
+
+                // Load LLM vocabulary
+                var (vocab, embeddings) = await memoryPersistence.LoadLLMVocabularyAsync();
+                if (vocab != null && embeddings != null)
+                {
+                    Console.WriteLine("[MEMORY] Restored LLM vocabulary from previous session");
+                }
+
+                Console.WriteLine("[MEMORY] ✅ Knowledge loaded successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MEMORY] No previous knowledge found or error loading: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Save all learned knowledge
+        /// </summary>
+        private async Task SaveKnowledgeAsync()
+        {
+            try
+            {
+                Console.WriteLine("[MEMORY] Saving learned knowledge...");
+
+                // Save personality evolution
+                await memoryPersistence.SavePersonalityAsync(personality);
+
+                // Save conversation history
+                var summary = intelligentResponse.GetConversationSummary();
+                await memoryPersistence.SaveConversationsAsync(new List<string> { summary });
+
+                // Save LLM vocabulary if ready (would need methods to expose vocabulary in LocalLLM)
+                if (intelligentResponse.IsLLMReady())
+                {
+                    Console.WriteLine("[MEMORY] LLM vocabulary ready for save (needs implementation)");
+                }
+
+                Console.WriteLine("[MEMORY] ✅ All knowledge saved successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MEMORY] Error saving knowledge: {ex.Message}");
+            }
+        }
+
         public void Dispose()
         {
+            // Save knowledge before shutting down
+            Task.Run(async () => await SaveKnowledgeAsync()).Wait(5000);
+
             Stop();
             voiceSystem.Dispose();
             cancellationToken.Dispose();

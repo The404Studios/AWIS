@@ -435,92 +435,313 @@ namespace AWIS.AI
     }
 
     /// <summary>
-    /// Simplified transformer layer
+    /// Enhanced transformer layer with multi-head attention and layer normalization
     /// </summary>
     public class TransformerLayer
     {
-        private readonly double[,] attentionWeights;
+        private readonly int numHeads = 4; // Multi-head attention
+        private readonly List<AttentionHead> attentionHeads;
         private readonly double[,] feedForwardWeights;
         private readonly double[] biases;
+        private readonly double[] layerNormGamma;
+        private readonly double[] layerNormBeta;
         private readonly Random random;
 
         public TransformerLayer(int inputSize, int hiddenSize, Random random)
         {
             this.random = random;
 
-            attentionWeights = new double[inputSize, hiddenSize];
+            // Multi-head attention initialization
+            attentionHeads = new List<AttentionHead>();
+            int headDim = hiddenSize / numHeads;
+            for (int i = 0; i < numHeads; i++)
+            {
+                attentionHeads.Add(new AttentionHead(inputSize, headDim, random));
+            }
+
             feedForwardWeights = new double[hiddenSize, inputSize];
             biases = new double[hiddenSize];
+            layerNormGamma = new double[inputSize];
+            layerNormBeta = new double[inputSize];
 
-            // Xavier initialization
+            // Xavier initialization for feed-forward
             var scale = Math.Sqrt(2.0 / (inputSize + hiddenSize));
-
-            for (int i = 0; i < inputSize; i++)
-            {
-                for (int j = 0; j < hiddenSize; j++)
-                {
-                    attentionWeights[i, j] = (random.NextDouble() - 0.5) * scale;
-                    feedForwardWeights[j, i] = (random.NextDouble() - 0.5) * scale;
-                }
-            }
 
             for (int i = 0; i < hiddenSize; i++)
             {
+                for (int j = 0; j < inputSize; j++)
+                {
+                    feedForwardWeights[i, j] = (random.NextDouble() - 0.5) * scale;
+                }
                 biases[i] = 0;
+            }
+
+            // Initialize layer norm parameters
+            for (int i = 0; i < inputSize; i++)
+            {
+                layerNormGamma[i] = 1.0;
+                layerNormBeta[i] = 0.0;
             }
         }
 
         public double[] Forward(double[] input)
         {
+            // Layer normalization (pre-norm)
+            var normalizedInput = LayerNorm(input);
+
+            // Multi-head attention
+            var attentionOutputs = new List<double[]>();
+            foreach (var head in attentionHeads)
+            {
+                attentionOutputs.Add(head.Attend(normalizedInput));
+            }
+
+            // Concatenate attention heads
+            var concatenated = ConcatenateHeads(attentionOutputs);
+
+            // Residual connection
+            var afterAttention = AddResidual(normalizedInput, concatenated);
+
+            // Layer normalization after attention
+            var normalized = LayerNorm(afterAttention);
+
+            // Feed-forward network with ReLU activation
             int hiddenSize = biases.Length;
             var hidden = new double[hiddenSize];
 
-            // Attention mechanism (simplified)
             for (int j = 0; j < hiddenSize; j++)
             {
                 double sum = biases[j];
-                for (int i = 0; i < Math.Min(input.Length, attentionWeights.GetLength(0)); i++)
+                for (int i = 0; i < Math.Min(normalized.Length, feedForwardWeights.GetLength(1)); i++)
                 {
-                    sum += input[i] * attentionWeights[i, j];
+                    sum += normalized[i] * feedForwardWeights[j, i];
                 }
                 hidden[j] = ReLU(sum);
             }
 
-            // Feed-forward (simplified)
+            // Project back to input dimension
             var output = new double[input.Length];
             for (int i = 0; i < input.Length; i++)
             {
-                double sum = 0;
-                for (int j = 0; j < hiddenSize; j++)
+                if (i < hiddenSize)
                 {
-                    sum += hidden[j] * feedForwardWeights[j, i];
+                    output[i] = hidden[i];
                 }
-                output[i] = sum;
+            }
+
+            // Residual connection
+            output = AddResidual(normalized, output);
+
+            return output;
+        }
+
+        private double[] LayerNorm(double[] input)
+        {
+            // Calculate mean
+            double mean = 0;
+            foreach (var val in input)
+                mean += val;
+            mean /= input.Length;
+
+            // Calculate variance
+            double variance = 0;
+            foreach (var val in input)
+            {
+                var diff = val - mean;
+                variance += diff * diff;
+            }
+            variance /= input.Length;
+
+            // Normalize
+            var output = new double[input.Length];
+            double epsilon = 1e-5;
+            for (int i = 0; i < input.Length; i++)
+            {
+                output[i] = (input[i] - mean) / Math.Sqrt(variance + epsilon);
+                output[i] = output[i] * layerNormGamma[i] + layerNormBeta[i];
             }
 
             return output;
         }
 
+        private double[] ConcatenateHeads(List<double[]> heads)
+        {
+            if (heads.Count == 0) return new double[0];
+
+            int totalLength = heads.Sum(h => h.Length);
+            var result = new double[totalLength];
+            int offset = 0;
+
+            foreach (var head in heads)
+            {
+                Array.Copy(head, 0, result, offset, head.Length);
+                offset += head.Length;
+            }
+
+            return result;
+        }
+
+        private double[] AddResidual(double[] input, double[] residual)
+        {
+            var result = new double[input.Length];
+            for (int i = 0; i < Math.Min(input.Length, residual.Length); i++)
+            {
+                result[i] = input[i] + residual[i];
+            }
+            return result;
+        }
+
         public void UpdateWeights(double learningRate, double loss)
         {
-            // Simplified weight update
+            // Update feed-forward weights
             var adjustment = learningRate * loss;
 
-            for (int i = 0; i < attentionWeights.GetLength(0); i++)
+            for (int i = 0; i < feedForwardWeights.GetLength(0); i++)
             {
-                for (int j = 0; j < attentionWeights.GetLength(1); j++)
+                for (int j = 0; j < feedForwardWeights.GetLength(1); j++)
                 {
-                    attentionWeights[i, j] -= adjustment * (random.NextDouble() - 0.5);
+                    feedForwardWeights[i, j] -= adjustment * (random.NextDouble() - 0.5) * 0.01;
                 }
             }
 
+            // Update biases
             for (int i = 0; i < biases.Length; i++)
             {
-                biases[i] -= adjustment * 0.1;
+                biases[i] -= adjustment * 0.01;
+            }
+
+            // Update layer normalization parameters
+            for (int i = 0; i < layerNormGamma.Length; i++)
+            {
+                layerNormGamma[i] -= adjustment * (random.NextDouble() - 0.5) * 0.001;
+                layerNormBeta[i] -= adjustment * (random.NextDouble() - 0.5) * 0.001;
+            }
+
+            // Update attention heads
+            foreach (var head in attentionHeads)
+            {
+                head.UpdateWeights(learningRate, loss);
             }
         }
 
         private static double ReLU(double x) => Math.Max(0, x);
+    }
+
+    /// <summary>
+    /// Single attention head for multi-head attention mechanism
+    /// </summary>
+    public class AttentionHead
+    {
+        private readonly double[,] queryWeights;
+        private readonly double[,] keyWeights;
+        private readonly double[,] valueWeights;
+        private readonly int headDim;
+        private readonly Random random;
+
+        public AttentionHead(int inputSize, int headDim, Random random)
+        {
+            this.headDim = headDim;
+            this.random = random;
+
+            queryWeights = new double[inputSize, headDim];
+            keyWeights = new double[inputSize, headDim];
+            valueWeights = new double[inputSize, headDim];
+
+            // Initialize with small random values
+            var scale = Math.Sqrt(1.0 / inputSize);
+            for (int i = 0; i < inputSize; i++)
+            {
+                for (int j = 0; j < headDim; j++)
+                {
+                    queryWeights[i, j] = (random.NextDouble() - 0.5) * scale;
+                    keyWeights[i, j] = (random.NextDouble() - 0.5) * scale;
+                    valueWeights[i, j] = (random.NextDouble() - 0.5) * scale;
+                }
+            }
+        }
+
+        public double[] Attend(double[] input)
+        {
+            // Compute query, key, value
+            var query = MatrixMultiply(input, queryWeights);
+            var key = MatrixMultiply(input, keyWeights);
+            var value = MatrixMultiply(input, valueWeights);
+
+            // Compute attention scores (simplified self-attention)
+            double[] attentionScores = new double[headDim];
+            for (int i = 0; i < headDim; i++)
+            {
+                attentionScores[i] = query[i] * key[i]; // Simplified dot product
+            }
+
+            // Apply softmax to get attention weights
+            var attentionWeights = Softmax(attentionScores);
+
+            // Apply attention weights to values
+            var output = new double[headDim];
+            for (int i = 0; i < headDim; i++)
+            {
+                output[i] = attentionWeights[i] * value[i];
+            }
+
+            return output;
+        }
+
+        private double[] MatrixMultiply(double[] input, double[,] weights)
+        {
+            int outputSize = weights.GetLength(1);
+            var result = new double[outputSize];
+
+            for (int j = 0; j < outputSize; j++)
+            {
+                double sum = 0;
+                for (int i = 0; i < Math.Min(input.Length, weights.GetLength(0)); i++)
+                {
+                    sum += input[i] * weights[i, j];
+                }
+                result[j] = sum;
+            }
+
+            return result;
+        }
+
+        private double[] Softmax(double[] scores)
+        {
+            // Compute exp and sum
+            double maxScore = scores.Max();
+            double[] expScores = new double[scores.Length];
+            double sum = 0;
+
+            for (int i = 0; i < scores.Length; i++)
+            {
+                expScores[i] = Math.Exp(scores[i] - maxScore); // Subtract max for numerical stability
+                sum += expScores[i];
+            }
+
+            // Normalize
+            for (int i = 0; i < expScores.Length; i++)
+            {
+                expScores[i] /= sum;
+            }
+
+            return expScores;
+        }
+
+        public void UpdateWeights(double learningRate, double loss)
+        {
+            var adjustment = learningRate * loss * 0.01;
+
+            // Update query, key, value weights
+            for (int i = 0; i < queryWeights.GetLength(0); i++)
+            {
+                for (int j = 0; j < queryWeights.GetLength(1); j++)
+                {
+                    queryWeights[i, j] -= adjustment * (random.NextDouble() - 0.5);
+                    keyWeights[i, j] -= adjustment * (random.NextDouble() - 0.5);
+                    valueWeights[i, j] -= adjustment * (random.NextDouble() - 0.5);
+                }
+            }
+        }
     }
 
     public class TrainingExample
