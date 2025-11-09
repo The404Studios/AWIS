@@ -34,7 +34,7 @@ namespace AWIS.Voice
     /// <summary>
     /// Voice command system for processing natural language commands
     /// </summary>
-    public class VoiceCommandSystem
+    public class VoiceCommandSystem : IDisposable
     {
         private readonly ConcurrentQueue<VoiceCommand> commandQueue = new();
         private readonly Dictionary<string, VoiceCommandHandler> commandHandlers = new();
@@ -260,7 +260,7 @@ namespace AWIS.Voice
             var endQuote = text.LastIndexOf('"');
             if (startQuote >= 0 && endQuote > startQuote)
             {
-                command.Parameters["quoted_text"] = text.Substring(startQuote + 1, endQuote - startQuote - 1);
+                command.Parameters["quoted_text"] = text[(startQuote + 1)..endQuote];
             }
 
             // Extract color references

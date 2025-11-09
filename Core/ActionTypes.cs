@@ -23,6 +23,7 @@ namespace AWIS.Core
         Drop,
         Scroll,
         Hover,
+        Move,
 
         // System Control
         Start,

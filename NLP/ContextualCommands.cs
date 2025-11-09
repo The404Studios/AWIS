@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 
 namespace AWIS.NLP
@@ -11,6 +12,7 @@ namespace AWIS.NLP
     /// <summary>
     /// Contextual command parser that understands spatial references, colors, and chained actions
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ContextualVoiceCommandSystem
     {
         private readonly ScreenContextAnalyzer screenAnalyzer;
@@ -109,13 +111,13 @@ namespace AWIS.NLP
     /// </summary>
     public class ContextualAction
     {
-        public ActionDefinition Action { get; set; }
-        public SpatialContext SpatialContext { get; set; }
-        public ColorContext ColorContext { get; set; }
-        public string OriginalCommand { get; set; }
+        public required ActionDefinition Action { get; set; }
+        public required SpatialContext SpatialContext { get; set; }
+        public required ColorContext ColorContext { get; set; }
+        public required string OriginalCommand { get; set; }
         public int? TargetX { get; set; }
         public int? TargetY { get; set; }
-        public ScreenRegion TargetRegion { get; set; }
+        public ScreenRegion? TargetRegion { get; set; }
 
         public void Execute()
         {
@@ -385,8 +387,8 @@ namespace AWIS.NLP
     {
         public List<Color> Colors { get; set; } = new List<Color>();
         public List<string> ColorNames { get; set; } = new List<string>();
-        public string TargetObject { get; set; }
-        public string TargetColor { get; set; }
+        public string? TargetObject { get; set; }
+        public string? TargetColor { get; set; }
     }
 
     #endregion
@@ -532,10 +534,10 @@ namespace AWIS.NLP
     public class ActionDefinition
     {
         public ActionType ActionType { get; set; }
-        public string Parameter { get; set; }
-        public string TargetObject { get; set; }
-        public string KeyMapping { get; set; }
-        public string Description { get; set; }
+        public string? Parameter { get; set; }
+        public string? TargetObject { get; set; }
+        public string? KeyMapping { get; set; }
+        public required string Description { get; set; }
     }
 
     public enum ActionType
@@ -556,6 +558,7 @@ namespace AWIS.NLP
     /// <summary>
     /// Analyzes screen content to find targets based on spatial and color context
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ScreenContextAnalyzer
     {
         private readonly ColorDetector colorDetector;
@@ -691,7 +694,7 @@ namespace AWIS.NLP
         public int CenterX { get; set; }
         public int CenterY { get; set; }
         public int PixelCount { get; set; }
-        public string Label { get; set; }
+        public string? Label { get; set; }
     }
 
     #endregion

@@ -10,8 +10,8 @@ namespace AWIS.MachineLearning
     /// </summary>
     public class EdgeDetection
     {
-        public static double[,] SobelX = new double[,] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
-        public static double[,] SobelY = new double[,] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+        public static readonly double[,] SobelX = new double[,] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
+        public static readonly double[,] SobelY = new double[,] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
 
         public static double[,] Sobel(double[,] image)
         {
@@ -234,7 +234,7 @@ namespace AWIS.MachineLearning
         {
             int height = image.GetLength(0);
             int width = image.GetLength(1);
-            var corners = new List<(int, int, double)>();
+            var corners = new List<(int x, int y, double response)>();
 
             // Compute gradients
             var Ix = new double[height, width];
@@ -302,7 +302,7 @@ namespace AWIS.MachineLearning
         private static List<(int x, int y, double response)> NonMaxSuppression(
             List<(int x, int y, double response)> corners, int radius)
         {
-            var result = new List<(int, int, double)>();
+            var result = new List<(int x, int y, double response)>();
             var sorted = corners.OrderByDescending(c => c.response).ToList();
 
             foreach (var corner in sorted)

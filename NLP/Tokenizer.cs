@@ -15,7 +15,6 @@ namespace AWIS.NLP
         private readonly Dictionary<int, string> reverseVocabulary;
         private readonly Dictionary<(string, string), int> bpeMerges;
         private readonly int vocabSize;
-        private readonly string specialTokens;
 
         public BPETokenizer(int vocabSize = 10000)
         {
@@ -23,7 +22,6 @@ namespace AWIS.NLP
             this.vocabulary = new Dictionary<string, int>();
             this.reverseVocabulary = new Dictionary<int, string>();
             this.bpeMerges = new Dictionary<(string, string), int>();
-            this.specialTokens = "<PAD><UNK><BOS><EOS><MASK>";
             InitializeSpecialTokens();
         }
 
@@ -454,8 +452,8 @@ namespace AWIS.NLP
     {
         public int Frequency { get; set; }
         public int? TokenId { get; set; }
-        public HuffmanNode Left { get; set; }
-        public HuffmanNode Right { get; set; }
+        public HuffmanNode? Left { get; set; }
+        public HuffmanNode? Right { get; set; }
 
         public bool IsLeaf => TokenId.HasValue;
     }
@@ -464,7 +462,7 @@ namespace AWIS.NLP
     {
         private readonly BPETokenizer baseTokenizer;
         private readonly Dictionary<int, string> huffmanCodes;
-        private HuffmanNode huffmanTree;
+        private HuffmanNode? huffmanTree;
         private readonly Dictionary<int, int> tokenFrequencies;
 
         public CompressedTokenizer(int vocabSize = 10000)
@@ -754,7 +752,7 @@ namespace AWIS.NLP
             }
         }
 
-        public void Train(List<string> corpus, string model = "unigram")
+        public void Train(List<string> corpus)
         {
             // Preprocess: add space marker
             var processedCorpus = corpus.Select(text => "▁" + text.Replace(" ", "▁")).ToList();
