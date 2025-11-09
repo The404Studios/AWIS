@@ -20,6 +20,7 @@ namespace AWIS
         private static ParallelSystemCoordinator coordinator = null!;
         private static ParallelPerformanceMonitor performanceMonitor = null!;
 
+        [SupportedOSPlatform("windows")]
         static async Task Main(string[] args)
         {
             PrintWelcomeBanner();

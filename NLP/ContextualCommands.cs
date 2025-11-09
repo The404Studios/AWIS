@@ -172,7 +172,7 @@ namespace AWIS.NLP
 
         private void ExecuteMovement()
         {
-            var key = MapMovementToKey(Action.Parameter);
+            var key = MapMovementToKey(Action.Parameter ?? "forward");
             Console.WriteLine($"[SIMULATED] Movement: {Action.Parameter} → Key: {key}");
             // In real implementation: Press the mapped key
         }
@@ -183,7 +183,7 @@ namespace AWIS.NLP
             // In real implementation: Use mouse_event for scrolling
         }
 
-        private string MapMovementToKey(string movement)
+        private static string MapMovementToKey(string movement)
         {
             var mappings = new Dictionary<string, string>
             {
@@ -198,8 +198,8 @@ namespace AWIS.NLP
                 ["crouch"] = "C"
             };
 
-            return mappings.ContainsKey(movement.ToLower())
-                ? mappings[movement.ToLower()]
+            return mappings.TryGetValue(movement.ToLower(), out var key)
+                ? key
                 : movement;
         }
     }
@@ -374,7 +374,7 @@ namespace AWIS.NLP
             return context;
         }
 
-        public bool IsColorMatch(Color pixelColor, Color targetColor, int tolerance = 30)
+        public static bool IsColorMatch(Color pixelColor, Color targetColor, int tolerance = 30)
         {
             int rDiff = Math.Abs(pixelColor.R - targetColor.R);
             int gDiff = Math.Abs(pixelColor.G - targetColor.G);
@@ -477,12 +477,12 @@ namespace AWIS.NLP
             return segments.Select(s => s.Trim()).ToList();
         }
 
-        private ActionDefinition ParseAction(string segment)
+        private ActionDefinition? ParseAction(string segment)
         {
             // Check for movement commands
             foreach (var kvp in movementKeywords)
             {
-                if (segment.Contains(kvp.Key))
+                if (segment.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase))
                 {
                     return new ActionDefinition
                     {
@@ -497,7 +497,7 @@ namespace AWIS.NLP
             // Check for action keywords
             foreach (var kvp in actionKeywords.OrderByDescending(k => k.Key.Length))
             {
-                if (segment.Contains(kvp.Key))
+                if (segment.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase))
                 {
                     var action = new ActionDefinition
                     {
@@ -558,7 +558,7 @@ namespace AWIS.NLP
             colorDetector = new ColorDetector();
         }
 
-        public ScreenRegion FindTarget(Bitmap screen, SpatialContext spatial, ColorContext color, string targetObject)
+        public ScreenRegion? FindTarget(Bitmap screen, SpatialContext spatial, ColorContext color, string? targetObject)
         {
             // Get the search region based on spatial context
             var searchRegion = GetSearchRegion(screen.Width, screen.Height, spatial);
@@ -577,7 +577,7 @@ namespace AWIS.NLP
             return coloredRegions.FirstOrDefault();
         }
 
-        private Rectangle GetSearchRegion(int screenWidth, int screenHeight, SpatialContext spatial)
+        private static Rectangle GetSearchRegion(int screenWidth, int screenHeight, SpatialContext spatial)
         {
             switch (spatial.Zone)
             {
@@ -645,7 +645,7 @@ namespace AWIS.NLP
                     if (x >= 0 && x < screen.Width && y >= 0 && y < screen.Height)
                     {
                         var pixelColor = screen.GetPixel(x, y);
-                        if (colorDetector.IsColorMatch(pixelColor, targetColor, 50))
+                        if (ColorDetector.IsColorMatch(pixelColor, targetColor, 50))
                         {
                             coloredPixels.Add(new Point(x, y));
                         }

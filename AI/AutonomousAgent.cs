@@ -61,7 +61,7 @@ namespace AWIS.AI
             voiceSystem.RegisterHandler("stop recording", async cmd =>
             {
                 var actions = actionRecorder.StopRecording();
-                if (actions.Any())
+                if (actions.Count > 0)
                 {
                     actionRecorder.SaveRecording("last_recording", actions);
                     await SpeakAsync($"Recorded {actions.Count} actions. I've learned this sequence.");

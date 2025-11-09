@@ -123,7 +123,7 @@ namespace AWIS.Input
         public async Task ReplayActions(List<RecordedAction>? actions = null, double speedMultiplier = 1.0)
         {
             var actionsToReplay = actions ?? recordedActions;
-            if (!actionsToReplay.Any())
+            if (actionsToReplay.Count == 0)
             {
                 Console.WriteLine("[RECORDER] No actions to replay.");
                 return;
