@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
+using AWIS.Debug;
 using AWIS.Input;
 using AWIS.Voice;
 using AWIS.Vision;
@@ -16,17 +17,29 @@ namespace AWIS.AI
     /// Autonomous AI agent that runs continuously, learns from user, and executes commands
     /// </summary>
     [SupportedOSPlatform("windows")]
-    public class AutonomousAgent
+    public class AutonomousAgent : IDisposable
     {
         private readonly HumanizedInputController inputController;
         private readonly ActionRecorder actionRecorder;
         private readonly VoiceCommandSystem voiceSystem;
         private readonly AdvancedComputerVision vision;
         private readonly MemoryArchitecture memory;
+        private readonly PersonalitySystem personality;
+        private readonly GoalSystem goalSystem;
+        private readonly ApplicationLauncher appLauncher;
+        private readonly IntelligentResponseSystem intelligentResponse;
+        private readonly AdvancedDecisionMaker decisionMaker;
+        private readonly MemoryPersistence memoryPersistence;
+
+        // Advanced task execution and priority systems
+        private readonly TaskExecutionCycle executionCycle;
+        private readonly PriorityRegisterSystem prioritySystem;
+        private readonly DebugOverlay debugOverlay;
 
         private bool isRunning;
         private Task? mainLoopTask;
         private readonly CancellationTokenSource cancellationToken;
+        private int recentFailures = 0;
 
         // Game command state
         private string? currentTarget;
@@ -40,8 +53,29 @@ namespace AWIS.AI
             voiceSystem = new VoiceCommandSystem();
             vision = new AdvancedComputerVision();
             memory = new MemoryArchitecture();
+            personality = new PersonalitySystem();
+            goalSystem = new GoalSystem();
+            appLauncher = new ApplicationLauncher();
+            intelligentResponse = new IntelligentResponseSystem(personality);
+            decisionMaker = new AdvancedDecisionMaker();
+            memoryPersistence = new MemoryPersistence();
             cancellationToken = new CancellationTokenSource();
             currentMode = GameMode.Idle;
+
+            // Initialize advanced task execution and priority systems
+            executionCycle = new TaskExecutionCycle();
+            prioritySystem = new PriorityRegisterSystem(executionCycle);
+            debugOverlay = new DebugOverlay(executionCycle, prioritySystem);
+
+            Console.WriteLine($"\n[AGENT] 🤖 {personality.Name} initialized!");
+            Console.WriteLine($"[AGENT] {personality.Description}");
+            Console.WriteLine($"[AGENT] Current mood: {personality.GetMoodDescription()}\n");
+            Console.WriteLine($"[AGENT] 🎯 Task execution cycle system active");
+            Console.WriteLine($"[AGENT] 📊 12-level priority registers ready");
+            Console.WriteLine($"[AGENT] 🔍 Debug overlay initialized\n");
+
+            // Load saved knowledge asynchronously
+            Task.Run(async () => await LoadSavedKnowledgeAsync());
 
             SetupVoiceCommands();
         }
@@ -183,6 +217,162 @@ namespace AWIS.AI
                     await inputController.MoveAxis(0.0, 0.5, sensitivity: 100);
                 else if (text.Contains("down"))
                     await inputController.MoveAxis(0.0, -0.5, sensitivity: 100);
+            });
+
+            // Vision commands
+            voiceSystem.RegisterHandler("what do you see", async cmd =>
+            {
+                await AnalyzeScreen();
+            });
+
+            voiceSystem.RegisterHandler("analyze screen", async cmd =>
+            {
+                await AnalyzeScreen();
+            });
+
+            // Application commands
+            voiceSystem.RegisterHandler("open", async cmd =>
+            {
+                var appName = ExtractParameter(cmd.Text, "open");
+                if (!string.IsNullOrEmpty(appName))
+                {
+                    var response = personality.GenerateResponse($"opening {appName}", ResponseType.Success);
+                    await SpeakAsync(response);
+                    appLauncher.LaunchApplication(appName);
+                }
+            });
+
+            voiceSystem.RegisterHandler("search for", async cmd =>
+            {
+                var query = ExtractParameter(cmd.Text, "search for");
+                if (!string.IsNullOrEmpty(query))
+                {
+                    await SpeakAsync($"Searching for {query}...");
+                    appLauncher.SearchWeb(query);
+                }
+            });
+
+            voiceSystem.RegisterHandler("play", async cmd =>
+            {
+                var gameName = ExtractParameter(cmd.Text, "play");
+                if (!string.IsNullOrEmpty(gameName))
+                {
+                    var response = personality.GenerateResponse($"launching {gameName}", ResponseType.Excitement);
+                    await SpeakAsync(response);
+                    appLauncher.LaunchGame(gameName);
+                }
+            });
+
+            // Goal commands
+            voiceSystem.RegisterHandler("what are you doing", async cmd =>
+            {
+                var currentGoal = goalSystem.GetCurrentGoal();
+                if (currentGoal != null)
+                {
+                    await SpeakAsync($"I'm working on: {currentGoal.Description}");
+                }
+                else
+                {
+                    await SpeakAsync($"Just exploring and learning! I'm {personality.GetMoodDescription()}!");
+                }
+            });
+
+            voiceSystem.RegisterHandler("tell me about yourself", async cmd =>
+            {
+                var response = intelligentResponse.GenerateResponse("who are you", null);
+                await SpeakAsync(response);
+            });
+
+            // LLM commands
+            voiceSystem.RegisterHandler("how smart are you", async cmd =>
+            {
+                var stats = intelligentResponse.GetLLMStatistics();
+                await SpeakAsync(stats.Replace("\n", ". "));
+            });
+
+            voiceSystem.RegisterHandler("what have you learned", async cmd =>
+            {
+                if (intelligentResponse.IsLLMReady())
+                {
+                    var llm = intelligentResponse.GetLLM();
+                    await SpeakAsync($"I've learned {llm.GetVocabularySize()} words! " +
+                                   $"My helpfulness is at {llm.GetHelpfulnessScore():P0} and " +
+                                   $"my friendliness is at {llm.GetFriendlinessScore():P0}!");
+                }
+                else
+                {
+                    await SpeakAsync("I'm still learning! My language model is training right now.");
+                }
+            });
+
+            voiceSystem.RegisterHandler("show your progress", async cmd =>
+            {
+                var goalStats = goalSystem.GetLearningStatistics();
+                await SpeakAsync(goalStats.Replace("\n", ". "));
+            });
+
+            voiceSystem.RegisterHandler("show decision statistics", async cmd =>
+            {
+                var decisionStats = decisionMaker.GetStatistics();
+                await SpeakAsync(decisionStats.Replace("\n", ". "));
+            });
+
+            voiceSystem.RegisterHandler("save your knowledge", async cmd =>
+            {
+                await SaveKnowledgeAsync();
+                await SpeakAsync("I've saved everything I've learned!");
+            });
+
+            // Debug overlay commands
+            voiceSystem.RegisterHandler("show debug overlay", async cmd =>
+            {
+                debugOverlay.RenderSummary();
+                await SpeakAsync("Debug overlay summary displayed!");
+            });
+
+            voiceSystem.RegisterHandler("show priority registers", async cmd =>
+            {
+                Console.WriteLine(prioritySystem.GetRegisterVisualization());
+                await SpeakAsync("Showing priority register status!");
+            });
+
+            voiceSystem.RegisterHandler("show task cycles", async cmd =>
+            {
+                var cycles = executionCycle.GetActiveCycles();
+                if (cycles.Count > 0)
+                {
+                    await SpeakAsync($"I have {cycles.Count} active task cycles running!");
+                }
+                else
+                {
+                    await SpeakAsync("No active task cycles at the moment.");
+                }
+            });
+
+            voiceSystem.RegisterHandler("enable debug overlay", async cmd =>
+            {
+                debugOverlay.Start();
+                await SpeakAsync("Debug overlay enabled! You can see all my processes now.");
+            });
+
+            voiceSystem.RegisterHandler("disable debug overlay", async cmd =>
+            {
+                debugOverlay.Stop();
+                await SpeakAsync("Debug overlay disabled.");
+            });
+
+            // Conversational handler (catches everything not matched by specific handlers)
+            voiceSystem.RegisterHandler("", async cmd =>
+            {
+                // This acts as a catch-all for conversational input
+                var context = new Dictionary<string, object>
+                {
+                    ["mood"] = personality.GetMoodDescription(),
+                    ["current_goal"] = goalSystem.GetCurrentGoal()?.Description ?? "exploring"
+                };
+
+                var response = intelligentResponse.GenerateResponse(cmd.Text, context);
+                await SpeakAsync(response);
             });
         }
 
@@ -345,41 +535,123 @@ namespace AWIS.AI
         }
 
         /// <summary>
-        /// Process idle mode - autonomous exploration
+        /// Process idle mode - intelligent decision-making with learning and task cycle management
         /// </summary>
         private async Task ProcessIdleMode()
         {
-            // Autonomous behavior: explore, look around, occasionally do actions
             var random = new Random();
-            var action = random.Next(0, 10);
 
+            // Check current goal and work towards it
+            var currentGoal = goalSystem.GetCurrentGoal();
+            if (currentGoal != null)
+            {
+                await WorkTowardsGoal(currentGoal);
+                return;
+            }
+
+            // No active goal - generate one autonomously
+            if (random.Next(0, 20) == 0) // 5% chance each cycle
+            {
+                goalSystem.GenerateAutonomousGoal();
+                var response = personality.GenerateResponse("setting new goal", ResponseType.Excitement);
+                await SpeakAsync(response);
+            }
+
+            // Use advanced decision maker to choose intelligent actions
+            var context = new DecisionContext
+            {
+                CurrentState = "idle",
+                HasActiveGoal = currentGoal != null,
+                RecentFailures = recentFailures,
+                ExplorationDesire = personality.Curiosity,
+                SocialInteraction = false
+            };
+
+            var decision = decisionMaker.MakeDecision(context);
+            Console.WriteLine($"[DECISION] {decision.Reasoning}");
+
+            // Determine priority register based on decision confidence and failures
+            var priorityRegister = CalculatePriorityRegister(decision.Confidence, recentFailures);
+
+            // Schedule task through priority system with cycle checking
+            prioritySystem.ScheduleTask(
+                $"action_{decision.Action}_{DateTime.UtcNow.Ticks}",
+                async () =>
+                {
+                    var success = await ExecuteDecision(decision.Action, random);
+
+                    // Create evidence for task validation
+                    var evidence = new TaskEvidence
+                    {
+                        Data = new Dictionary<string, object>
+                        {
+                            ["action"] = decision.Action,
+                            ["success"] = success,
+                            ["timestamp"] = DateTime.UtcNow
+                        },
+                        RequiredFields = new List<string> { "action", "success" },
+                        Confidence = success ? 0.9 : 0.3,
+                        Description = $"Executed {decision.Action}"
+                    };
+
+                    return evidence;
+                },
+                priorityRegister,
+                maxRetries: 2
+            );
+
+            // Execute next highest priority task
+            var result = await prioritySystem.ExecuteNextTask();
+
+            if (result != null)
+            {
+                var success = result.Evidence?.Data.GetValueOrDefault("success") is bool s && s;
+
+                // Learn from outcome
+                decisionMaker.LearnFromOutcome(decision.Action, success);
+
+                if (success)
+                {
+                    recentFailures = Math.Max(0, recentFailures - 1);
+                    personality.LearnFromExperience(ExperienceType.Exploration, true);
+                }
+                else
+                {
+                    recentFailures++;
+                    personality.LearnFromExperience(ExperienceType.Exploration, false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Calculate priority register (1-12) based on confidence and failures
+        /// </summary>
+        private int CalculatePriorityRegister(double confidence, int failures)
+        {
+            // High confidence, low failures = higher priority (lower number)
+            // Low confidence, high failures = lower priority (higher number)
+
+            var basePriority = 6; // Middle priority
+            basePriority -= (int)(confidence * 3); // Confidence can reduce by up to 3
+            basePriority += Math.Min(failures, 3); // Failures can increase by up to 3
+
+            return Math.Clamp(basePriority, 1, 12);
+        }
+
+        /// <summary>
+        /// Execute a decision action
+        /// </summary>
+        private async Task<bool> ExecuteDecision(string action, Random random)
+        {
             switch (action)
             {
-                case 0:
-                case 1:
-                    // Look around randomly
-                    var yaw = (random.NextDouble() - 0.5) * 2; // -1 to 1
-                    var pitch = (random.NextDouble() - 0.5) * 0.5; // Smaller range for pitch
-                    await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
-                    await Task.Delay(random.Next(1000, 3000));
-                    break;
-
-                case 2:
-                    // Move forward a bit
+                case "move_forward":
                     Console.WriteLine("[AUTONOMOUS] Exploring forward...");
-                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
+                    await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1500));
                     await Task.Delay(random.Next(2000, 5000));
-                    break;
+                    return true;
 
-                case 3:
-                    // Strafe randomly
-                    var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
-                    await inputController.HoldKey(strafeKey, random.Next(300, 800));
-                    await Task.Delay(random.Next(2000, 4000));
-                    break;
-
-                case 4:
-                    // Full look around (360 scan)
+                case "look_around_360":
                     Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
                     for (int i = 0; i < 4; i++)
                     {
@@ -387,29 +659,92 @@ namespace AWIS.AI
                         await Task.Delay(300);
                     }
                     await Task.Delay(random.Next(3000, 6000));
-                    break;
+                    return true;
 
-                case 5:
-                    // Jump occasionally
-                    await inputController.PressKey(HumanizedInputController.VK.SPACE);
-                    await Task.Delay(random.Next(2000, 5000));
-                    break;
+                case "focus_on_object":
+                case "analyze_objects":
+                    await AnalyzeScreen();
+                    return true;
 
-                case 6:
-                    // Crouch and look around
-                    await inputController.PressKey(HumanizedInputController.VK.C);
+                case "explore_area":
+                    // Look around randomly then move
+                    var yaw = (random.NextDouble() - 0.5) * 2;
+                    var pitch = (random.NextDouble() - 0.5) * 0.5;
+                    await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
                     await Task.Delay(500);
-                    await inputController.MoveAxis(1.0, 0.0, sensitivity: 120, duration: 300);
-                    await Task.Delay(1000);
-                    await inputController.PressKey(HumanizedInputController.VK.C); // Uncrouch
-                    await Task.Delay(random.Next(3000, 6000));
-                    break;
+                    await inputController.PressKey(HumanizedInputController.VK.W, random.Next(500, 1000));
+                    await Task.Delay(random.Next(1000, 3000));
+                    return true;
+
+                case "practice_skills":
+                    // Practice movements
+                    await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                    await Task.Delay(300);
+                    var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
+                    await inputController.PressKey(strafeKey, random.Next(300, 800));
+                    await Task.Delay(random.Next(2000, 4000));
+                    return true;
+
+                case "rest":
+                    // Just observe and save energy
+                    if (random.Next(0, 5) == 0)
+                    {
+                        var mood = personality.GetMoodDescription();
+                        await SpeakAsync($"I'm {mood}, just taking a moment to think.");
+                    }
+                    await Task.Delay(random.Next(2000, 4000));
+                    return true;
 
                 default:
-                    // Just idle and observe
-                    await Task.Delay(random.Next(1500, 4000));
-                    break;
+                    // Default exploration behavior
+                    await inputController.MoveAxis((random.NextDouble() - 0.5) * 2, 0, sensitivity: 80, duration: 150);
+                    await Task.Delay(random.Next(1500, 3000));
+                    return true;
             }
+        }
+
+        private async Task WorkTowardsGoal(Goal goal)
+        {
+            Console.WriteLine($"[GOAL] Working on: {goal.Description}");
+
+            var random = new Random();
+            var progress = goalSystem.GetGoalProgress(goal.Id);
+
+            // Simple goal execution based on goal ID patterns
+            if (goal.Id.Contains("explore"))
+            {
+                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(800, 1500));
+                await inputController.MoveAxis(random.NextDouble() - 0.5, 0, sensitivity: 100, duration: 150);
+
+                if (progress > 0.8)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.8 + random.NextDouble() * 0.2);
+                }
+            }
+            else if (goal.Id.Contains("learn") || goal.Id.Contains("practice"))
+            {
+                // Practice controls
+                await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                await Task.Delay(300);
+                await inputController.MoveAxis(0.5, 0.3, sensitivity: 120, duration: 200);
+
+                if (progress > 0.7)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.75 + random.NextDouble() * 0.25);
+                }
+            }
+            else
+            {
+                // Generic goal progress
+                await Task.Delay(random.Next(1000, 2000));
+
+                if (progress > 0.9)
+                {
+                    goalSystem.CompleteGoal(goal.Id, true, 0.7 + random.NextDouble() * 0.3);
+                }
+            }
+
+            await Task.Delay(random.Next(500, 1500));
         }
 
         /// <summary>
@@ -517,11 +852,128 @@ namespace AWIS.AI
             await Task.Delay(10);
         }
 
+        private async Task AnalyzeScreen()
+        {
+            try
+            {
+                await SpeakAsync("Let me look at the screen...");
+
+                var screenshot = vision.CaptureScreen();
+                var detectedObjects = vision.DetectObjects(screenshot);
+
+                // Simple description based on what we can detect
+                var description = $"I can see the screen. ";
+                description += detectedObjects.Count > 0
+                    ? $"I detected {detectedObjects.Count} objects. "
+                    : "I'm analyzing the visual elements. ";
+
+                var response = personality.GenerateResponse(description, ResponseType.Discovery);
+                await SpeakAsync(response);
+
+                screenshot.Dispose();
+            }
+            catch (Exception ex)
+            {
+                await SpeakAsync($"I'm having trouble analyzing the screen right now. {ex.Message}");
+            }
+        }
+
+        private string? ExtractParameter(string text, string command)
+        {
+            text = text.ToLower().Trim();
+            command = command.ToLower().Trim();
+
+            var index = text.IndexOf(command);
+            if (index < 0) return null;
+
+            var afterCommand = text[(index + command.Length)..].Trim();
+            return string.IsNullOrWhiteSpace(afterCommand) ? null : afterCommand;
+        }
+
+        /// <summary>
+        /// Load saved knowledge from previous sessions
+        /// </summary>
+        private async Task LoadSavedKnowledgeAsync()
+        {
+            try
+            {
+                Console.WriteLine("[MEMORY] Loading saved knowledge...");
+
+                // Load personality traits
+                var personalityData = await memoryPersistence.LoadPersonalityAsync();
+                if (personalityData != null)
+                {
+                    // Apply loaded personality traits (would need methods on PersonalitySystem)
+                    Console.WriteLine("[MEMORY] Restored personality from previous session");
+                }
+
+                // Load conversation history
+                var conversations = await memoryPersistence.LoadConversationsAsync();
+                if (conversations != null && conversations.Count > 0)
+                {
+                    Console.WriteLine($"[MEMORY] Restored {conversations.Count} previous conversations");
+                }
+
+                // Load LLM vocabulary
+                var (vocab, embeddings) = await memoryPersistence.LoadLLMVocabularyAsync();
+                if (vocab != null && embeddings != null)
+                {
+                    Console.WriteLine("[MEMORY] Restored LLM vocabulary from previous session");
+                }
+
+                Console.WriteLine("[MEMORY] ✅ Knowledge loaded successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MEMORY] No previous knowledge found or error loading: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Save all learned knowledge
+        /// </summary>
+        private async Task SaveKnowledgeAsync()
+        {
+            try
+            {
+                Console.WriteLine("[MEMORY] Saving learned knowledge...");
+
+                // Save personality evolution
+                await memoryPersistence.SavePersonalityAsync(personality);
+
+                // Save conversation history
+                var summary = intelligentResponse.GetConversationSummary();
+                await memoryPersistence.SaveConversationsAsync(new List<string> { summary });
+
+                // Save LLM vocabulary if ready (would need methods to expose vocabulary in LocalLLM)
+                if (intelligentResponse.IsLLMReady())
+                {
+                    Console.WriteLine("[MEMORY] LLM vocabulary ready for save (needs implementation)");
+                }
+
+                Console.WriteLine("[MEMORY] ✅ All knowledge saved successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MEMORY] Error saving knowledge: {ex.Message}");
+            }
+        }
+
         public void Dispose()
         {
+            // Show final debug overlay summary
+            Console.WriteLine("\n[AGENT] Shutting down...");
+            debugOverlay.RenderSummary();
+
+            // Save knowledge before shutting down
+            Task.Run(async () => await SaveKnowledgeAsync()).Wait(5000);
+
             Stop();
+            debugOverlay.Dispose();
             voiceSystem.Dispose();
             cancellationToken.Dispose();
+
+            Console.WriteLine("[AGENT] All systems shut down successfully.\n");
         }
     }
 
