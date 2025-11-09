@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
+using System.Speech.Recognition;
 using System.Threading;
 using System.Threading.Tasks;
 using AWIS.Core;
@@ -34,6 +36,7 @@ namespace AWIS.Voice
     /// <summary>
     /// Voice command system for processing natural language commands
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class VoiceCommandSystem : IDisposable
     {
         private readonly ConcurrentQueue<VoiceCommand> commandQueue = new();
@@ -42,6 +45,8 @@ namespace AWIS.Voice
         private bool isProcessing = false;
         private Thread? processingThread;
         private readonly CancellationTokenSource cancellationToken = new();
+        private SpeechRecognitionEngine? speechRecognizer;
+        private bool voiceListeningEnabled = false;
 
         // Statistics
         private int totalCommandsProcessed = 0;
@@ -51,6 +56,7 @@ namespace AWIS.Voice
         public VoiceCommandSystem()
         {
             InitializeCommandMappings();
+            InitializeSpeechRecognition();
         }
 
         private void InitializeCommandMappings()
@@ -99,6 +105,101 @@ namespace AWIS.Voice
             commandMappings["abort"] = ActionType.Abort;
             commandMappings["cancel"] = ActionType.Cancel;
             commandMappings["help"] = ActionType.Help;
+        }
+
+        private void InitializeSpeechRecognition()
+        {
+            try
+            {
+                speechRecognizer = new SpeechRecognitionEngine(new System.Globalization.CultureInfo("en-US"));
+
+                // Build grammar with common commands
+                var choices = new Choices();
+                choices.Add(new string[] {
+                    "start recording", "stop recording", "repeat what I did",
+                    "fight", "attack", "run away", "retreat", "follow",
+                    "click here", "press", "look left", "look right",
+                    "look up", "look down", "turn around", "stop", "quit"
+                });
+
+                var gb = new GrammarBuilder();
+                gb.Append(choices);
+
+                // Also add dictation grammar for free-form commands
+                var dictationGrammar = new DictationGrammar();
+
+                speechRecognizer.LoadGrammar(new Grammar(gb));
+                speechRecognizer.LoadGrammar(dictationGrammar);
+
+                speechRecognizer.SpeechRecognized += OnSpeechRecognized;
+                speechRecognizer.SpeechRecognitionRejected += OnSpeechRejected;
+
+                speechRecognizer.SetInputToDefaultAudioDevice();
+
+                Console.WriteLine("[VOICE] Speech recognition initialized successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[VOICE] Failed to initialize speech recognition: {ex.Message}");
+                Console.WriteLine("[VOICE] Voice commands will only work via text input.");
+                speechRecognizer = null;
+            }
+        }
+
+        private void OnSpeechRecognized(object? sender, SpeechRecognizedEventArgs e)
+        {
+            if (e.Result.Confidence > 0.6)
+            {
+                Console.WriteLine($"[VOICE] Heard: \"{e.Result.Text}\" (confidence: {e.Result.Confidence:P0})");
+                ProcessTextCommand(e.Result.Text, e.Result.Confidence);
+            }
+        }
+
+        private void OnSpeechRejected(object? sender, SpeechRecognitionRejectedEventArgs e)
+        {
+            if (e.Result.Text.Length > 0)
+            {
+                Console.WriteLine($"[VOICE] Rejected: \"{e.Result.Text}\" (low confidence)");
+            }
+        }
+
+        /// <summary>
+        /// Starts listening to microphone for voice commands
+        /// </summary>
+        public void StartVoiceListening()
+        {
+            if (speechRecognizer == null)
+            {
+                Console.WriteLine("[VOICE] Speech recognition not available.");
+                return;
+            }
+
+            if (!voiceListeningEnabled)
+            {
+                try
+                {
+                    speechRecognizer.RecognizeAsync(RecognizeMode.Multiple);
+                    voiceListeningEnabled = true;
+                    Console.WriteLine("[VOICE] 🎤 Microphone is now listening...");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[VOICE] Failed to start listening: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Stops listening to microphone
+        /// </summary>
+        public void StopVoiceListening()
+        {
+            if (speechRecognizer != null && voiceListeningEnabled)
+            {
+                speechRecognizer.RecognizeAsyncStop();
+                voiceListeningEnabled = false;
+                Console.WriteLine("[VOICE] 🎤 Microphone stopped.");
+            }
         }
 
         /// <summary>
@@ -312,7 +413,16 @@ namespace AWIS.Voice
 
         public void Dispose()
         {
+            StopVoiceListening();
             StopProcessing();
+
+            if (speechRecognizer != null)
+            {
+                speechRecognizer.SpeechRecognized -= OnSpeechRecognized;
+                speechRecognizer.SpeechRecognitionRejected -= OnSpeechRejected;
+                speechRecognizer.Dispose();
+            }
+
             cancellationToken.Dispose();
             GC.SuppressFinalize(this);
         }

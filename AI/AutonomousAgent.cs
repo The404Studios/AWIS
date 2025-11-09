@@ -195,9 +195,12 @@ namespace AWIS.AI
 
             isRunning = true;
             voiceSystem.StartProcessing();
+            voiceSystem.StartVoiceListening(); // Enable microphone
             mainLoopTask = Task.Run(() => MainLoop(cancellationToken.Token));
 
             Console.WriteLine("=== Autonomous Agent Started ===");
+            Console.WriteLine("🎤 VOICE RECOGNITION ACTIVE - Speak commands!");
+            Console.WriteLine();
             Console.WriteLine("Say commands to interact:");
             Console.WriteLine("  Learning:");
             Console.WriteLine("    - 'start recording' / 'stop recording'");
@@ -213,6 +216,8 @@ namespace AWIS.AI
             Console.WriteLine("  Utility:");
             Console.WriteLine("    - 'click here'");
             Console.WriteLine("    - 'press [key]'");
+            Console.WriteLine();
+            Console.WriteLine("🤖 Agent is now autonomous - it will explore on its own!");
             Console.WriteLine("================================");
         }
 
@@ -242,8 +247,8 @@ namespace AWIS.AI
 
                         case GameMode.Idle:
                         default:
-                            // Just monitor and wait for commands
-                            await Task.Delay(100);
+                            // Autonomous exploration and actions
+                            await ProcessIdleMode();
                             break;
                     }
 
@@ -337,6 +342,74 @@ namespace AWIS.AI
         private async Task ProcessFleeingMode()
         {
             await ExecuteFleeSequence();
+        }
+
+        /// <summary>
+        /// Process idle mode - autonomous exploration
+        /// </summary>
+        private async Task ProcessIdleMode()
+        {
+            // Autonomous behavior: explore, look around, occasionally do actions
+            var random = new Random();
+            var action = random.Next(0, 10);
+
+            switch (action)
+            {
+                case 0:
+                case 1:
+                    // Look around randomly
+                    var yaw = (random.NextDouble() - 0.5) * 2; // -1 to 1
+                    var pitch = (random.NextDouble() - 0.5) * 0.5; // Smaller range for pitch
+                    await inputController.MoveAxis(yaw, pitch, sensitivity: 80, duration: 150);
+                    await Task.Delay(random.Next(1000, 3000));
+                    break;
+
+                case 2:
+                    // Move forward a bit
+                    Console.WriteLine("[AUTONOMOUS] Exploring forward...");
+                    await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(500, 1500));
+                    await Task.Delay(random.Next(2000, 5000));
+                    break;
+
+                case 3:
+                    // Strafe randomly
+                    var strafeKey = random.Next(0, 2) == 0 ? HumanizedInputController.VK.A : HumanizedInputController.VK.D;
+                    await inputController.HoldKey(strafeKey, random.Next(300, 800));
+                    await Task.Delay(random.Next(2000, 4000));
+                    break;
+
+                case 4:
+                    // Full look around (360 scan)
+                    Console.WriteLine("[AUTONOMOUS] Scanning surroundings...");
+                    for (int i = 0; i < 4; i++)
+                    {
+                        await inputController.MoveAxis(0.5, 0.0, sensitivity: 100, duration: 200);
+                        await Task.Delay(300);
+                    }
+                    await Task.Delay(random.Next(3000, 6000));
+                    break;
+
+                case 5:
+                    // Jump occasionally
+                    await inputController.PressKey(HumanizedInputController.VK.SPACE);
+                    await Task.Delay(random.Next(2000, 5000));
+                    break;
+
+                case 6:
+                    // Crouch and look around
+                    await inputController.PressKey(HumanizedInputController.VK.C);
+                    await Task.Delay(500);
+                    await inputController.MoveAxis(1.0, 0.0, sensitivity: 120, duration: 300);
+                    await Task.Delay(1000);
+                    await inputController.PressKey(HumanizedInputController.VK.C); // Uncrouch
+                    await Task.Delay(random.Next(3000, 6000));
+                    break;
+
+                default:
+                    // Just idle and observe
+                    await Task.Delay(random.Next(1500, 4000));
+                    break;
+            }
         }
 
         /// <summary>
