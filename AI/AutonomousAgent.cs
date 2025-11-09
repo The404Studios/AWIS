@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
-using WindowsInput.Native;
 using AWIS.Core;
 using AWIS.Input;
 using AWIS.Voice;
@@ -238,7 +237,7 @@ namespace AWIS.AI
             }
 
             // Default attack pattern
-            await inputController.PressKey(VirtualKeyCode.VK_1); // Attack key
+            await inputController.PressKey(HumanizedInputController.VK.VK_1); // Attack key
             await Task.Delay(500);
         }
 
@@ -279,7 +278,7 @@ namespace AWIS.AI
             }
 
             // Default flee: press S (backward) for 2 seconds
-            await inputController.PressKey(VirtualKeyCode.VK_S, 2000);
+            await inputController.PressKey(HumanizedInputController.VK.S, 2000);
             currentMode = GameMode.Idle;
         }
 
@@ -315,7 +314,7 @@ namespace AWIS.AI
             }
 
             // Default: move forward
-            await inputController.PressKey(VirtualKeyCode.VK_W, 500);
+            await inputController.PressKey(HumanizedInputController.VK.W, 500);
             await Task.Delay(100);
         }
 
@@ -363,21 +362,21 @@ namespace AWIS.AI
         /// <summary>
         /// Extract key from command
         /// </summary>
-        private VirtualKeyCode? ExtractKey(string command)
+        private byte? ExtractKey(string command)
         {
-            var keyMap = new Dictionary<string, VirtualKeyCode>
+            var keyMap = new Dictionary<string, byte>
             {
-                ["w"] = VirtualKeyCode.VK_W,
-                ["a"] = VirtualKeyCode.VK_A,
-                ["s"] = VirtualKeyCode.VK_S,
-                ["d"] = VirtualKeyCode.VK_D,
-                ["space"] = VirtualKeyCode.SPACE,
-                ["enter"] = VirtualKeyCode.RETURN,
-                ["escape"] = VirtualKeyCode.ESCAPE,
-                ["1"] = VirtualKeyCode.VK_1,
-                ["2"] = VirtualKeyCode.VK_2,
-                ["3"] = VirtualKeyCode.VK_3,
-                ["4"] = VirtualKeyCode.VK_4,
+                ["w"] = HumanizedInputController.VK.W,
+                ["a"] = HumanizedInputController.VK.A,
+                ["s"] = HumanizedInputController.VK.S,
+                ["d"] = HumanizedInputController.VK.D,
+                ["space"] = HumanizedInputController.VK.SPACE,
+                ["enter"] = HumanizedInputController.VK.RETURN,
+                ["escape"] = HumanizedInputController.VK.ESCAPE,
+                ["1"] = HumanizedInputController.VK.VK_1,
+                ["2"] = HumanizedInputController.VK.VK_2,
+                ["3"] = HumanizedInputController.VK.VK_3,
+                ["4"] = HumanizedInputController.VK.VK_4,
             };
 
             foreach (var kvp in keyMap)

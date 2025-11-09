@@ -6,18 +6,15 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
-using WindowsInput;
-using WindowsInput.Native;
 
 namespace AWIS.Input
 {
     /// <summary>
-    /// Humanized mouse and keyboard controller with natural movements
+    /// Humanized mouse and keyboard controller with natural movements using Win32 APIs
     /// </summary>
     [SupportedOSPlatform("windows")]
     public class HumanizedInputController
     {
-        private readonly InputSimulator inputSimulator;
         private readonly Random random;
         private Point currentMousePosition;
 
@@ -31,7 +28,6 @@ namespace AWIS.Input
 
         public HumanizedInputController()
         {
-            inputSimulator = new InputSimulator();
             random = new Random();
             UpdateCurrentMousePosition();
         }
@@ -118,25 +114,30 @@ namespace AWIS.Input
             // Pre-click delay
             await Task.Delay(random.Next(MIN_CLICK_DELAY, MAX_CLICK_DELAY));
 
-            // Perform click
+            // Perform click using Win32 mouse events
+            uint downFlag = 0, upFlag = 0;
             switch (button)
             {
                 case MouseButton.Left:
-                    inputSimulator.Mouse.LeftButtonDown();
-                    await Task.Delay(random.Next(50, 120)); // Hold time
-                    inputSimulator.Mouse.LeftButtonUp();
+                    downFlag = MOUSEEVENTF_LEFTDOWN;
+                    upFlag = MOUSEEVENTF_LEFTUP;
                     break;
                 case MouseButton.Right:
-                    inputSimulator.Mouse.RightButtonDown();
-                    await Task.Delay(random.Next(50, 120));
-                    inputSimulator.Mouse.RightButtonUp();
+                    downFlag = MOUSEEVENTF_RIGHTDOWN;
+                    upFlag = MOUSEEVENTF_RIGHTUP;
                     break;
                 case MouseButton.Middle:
-                    inputSimulator.Mouse.MiddleButtonDown();
-                    await Task.Delay(random.Next(50, 120));
-                    inputSimulator.Mouse.MiddleButtonUp();
+                    downFlag = MOUSEEVENTF_MIDDLEDOWN;
+                    upFlag = MOUSEEVENTF_MIDDLEUP;
                     break;
             }
+
+            // Mouse down
+            mouse_event(downFlag, 0, 0, 0, 0);
+            await Task.Delay(random.Next(50, 120)); // Hold time
+
+            // Mouse up
+            mouse_event(upFlag, 0, 0, 0, 0);
 
             // Post-click delay
             await Task.Delay(random.Next(MIN_CLICK_DELAY, MAX_CLICK_DELAY));
@@ -159,7 +160,14 @@ namespace AWIS.Input
         {
             foreach (char c in text)
             {
-                inputSimulator.Keyboard.TextEntry(c);
+                // Send character using keybd_event
+                short vk = VkKeyScan(c);
+                byte virtualKey = (byte)(vk & 0xFF);
+
+                keybd_event(virtualKey, 0, 0, 0); // Key down
+                await Task.Delay(random.Next(10, 30));
+                keybd_event(virtualKey, 0, KEYEVENTF_KEYUP, 0); // Key up
+
                 await Task.Delay(random.Next(50, 150)); // Typing speed variation
             }
         }
@@ -167,23 +175,23 @@ namespace AWIS.Input
         /// <summary>
         /// Press a key with humanized timing
         /// </summary>
-        public async Task PressKey(VirtualKeyCode key, int holdDuration = 0)
+        public async Task PressKey(byte virtualKey, int holdDuration = 0)
         {
-            inputSimulator.Keyboard.KeyDown(key);
+            keybd_event(virtualKey, 0, 0, 0); // Key down
             await Task.Delay(holdDuration > 0 ? holdDuration : random.Next(50, 120));
-            inputSimulator.Keyboard.KeyUp(key);
+            keybd_event(virtualKey, 0, KEYEVENTF_KEYUP, 0); // Key up
             await Task.Delay(random.Next(30, 80));
         }
 
         /// <summary>
         /// Press multiple keys simultaneously (for shortcuts)
         /// </summary>
-        public async Task PressKeys(params VirtualKeyCode[] keys)
+        public async Task PressKeys(params byte[] keys)
         {
             // Press all keys down
             foreach (var key in keys)
             {
-                inputSimulator.Keyboard.KeyDown(key);
+                keybd_event(key, 0, 0, 0);
                 await Task.Delay(random.Next(10, 30));
             }
 
@@ -192,7 +200,7 @@ namespace AWIS.Input
             // Release all keys up (in reverse order)
             foreach (var key in keys.Reverse())
             {
-                inputSimulator.Keyboard.KeyUp(key);
+                keybd_event(key, 0, KEYEVENTF_KEYUP, 0);
                 await Task.Delay(random.Next(10, 30));
             }
         }
@@ -203,17 +211,17 @@ namespace AWIS.Input
         public async Task Scroll(int amount, bool horizontal = false)
         {
             int scrolls = Math.Abs(amount);
-            int direction = amount > 0 ? 1 : -1;
+            int direction = amount > 0 ? 120 : -120; // WHEEL_DELTA
 
             for (int i = 0; i < scrolls; i++)
             {
                 if (horizontal)
                 {
-                    inputSimulator.Mouse.HorizontalScroll(direction);
+                    mouse_event(MOUSEEVENTF_HWHEEL, 0, 0, (uint)direction, 0);
                 }
                 else
                 {
-                    inputSimulator.Mouse.VerticalScroll(direction);
+                    mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)direction, 0);
                 }
                 await Task.Delay(random.Next(50, 150));
             }
@@ -234,11 +242,49 @@ namespace AWIS.Input
         [DllImport("user32.dll")]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        [DllImport("user32.dll")]
+        private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, int dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        private static extern short VkKeyScan(char ch);
+
+        // Mouse event flags
+        private const uint MOUSEEVENTF_LEFTDOWN = 0x0002;
+        private const uint MOUSEEVENTF_LEFTUP = 0x0004;
+        private const uint MOUSEEVENTF_RIGHTDOWN = 0x0008;
+        private const uint MOUSEEVENTF_RIGHTUP = 0x0010;
+        private const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+        private const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+        private const uint MOUSEEVENTF_WHEEL = 0x0800;
+        private const uint MOUSEEVENTF_HWHEEL = 0x01000;
+
+        // Keyboard event flags
+        private const uint KEYEVENTF_KEYUP = 0x0002;
+
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
         {
             public int X;
             public int Y;
+        }
+
+        // Virtual key codes
+        public static class VK
+        {
+            public const byte W = 0x57;
+            public const byte A = 0x41;
+            public const byte S = 0x53;
+            public const byte D = 0x44;
+            public const byte SPACE = 0x20;
+            public const byte RETURN = 0x0D;
+            public const byte ESCAPE = 0x1B;
+            public const byte VK_1 = 0x31;
+            public const byte VK_2 = 0x32;
+            public const byte VK_3 = 0x33;
+            public const byte VK_4 = 0x34;
         }
     }
 

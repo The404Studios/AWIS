@@ -13,6 +13,7 @@ namespace AWIS.Core
     /// </summary>
     public class SystemDemo
     {
+        [SupportedOSPlatform("windows")]
         public static async Task RunFullSystemDemo()
         {
             Console.Clear();

@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
-using WindowsInput.Native;
 using AWIS.Core;
 
 namespace AWIS.Input
@@ -89,7 +88,7 @@ namespace AWIS.Input
         /// <summary>
         /// Record a key press
         /// </summary>
-        public void RecordKeyPress(VirtualKeyCode key)
+        public void RecordKeyPress(byte key)
         {
             if (!isRecording) return;
 
@@ -223,7 +222,7 @@ namespace AWIS.Input
         public int? X { get; set; }
         public int? Y { get; set; }
         public MouseButton MouseButton { get; set; }
-        public VirtualKeyCode? Key { get; set; }
+        public byte? Key { get; set; }
         public string? Text { get; set; }
         public DateTime Timestamp { get; set; }
         public TimeSpan TimeSinceStart { get; set; }
