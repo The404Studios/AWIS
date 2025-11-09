@@ -713,7 +713,7 @@ namespace AWIS.AI
             // Simple goal execution based on goal ID patterns
             if (goal.Id.Contains("explore"))
             {
-                await inputController.HoldKey(HumanizedInputController.VK.W, random.Next(800, 1500));
+                await inputController.PressKey(HumanizedInputController.VK.W, random.Next(800, 1500));
                 await inputController.MoveAxis(random.NextDouble() - 0.5, 0, sensitivity: 100, duration: 150);
 
                 if (progress > 0.8)

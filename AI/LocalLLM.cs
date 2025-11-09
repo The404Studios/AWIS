@@ -20,7 +20,7 @@ namespace AWIS.AI
         // Model weights (simplified transformer)
         private readonly Dictionary<string, double[]> tokenEmbeddings;
         private readonly List<TransformerLayer> layers;
-        private readonly double[] outputWeights;
+        private double[] outputWeights;
 
         // Vocabulary and tokenizer
         private readonly Dictionary<string, int> vocabulary;
@@ -162,10 +162,10 @@ namespace AWIS.AI
 
                 // Check training data for similar patterns (retrieval-augmented)
                 var bestMatch = FindBestMatch(input);
-                if (bestMatch != null && bestMatch.Similarity > 0.7)
+                if (bestMatch != null && bestMatch.Value.Similarity > 0.7)
                 {
                     // Blend learned response with helpful tone
-                    return EnhanceWithPersonality(bestMatch.Response);
+                    return EnhanceWithPersonality(bestMatch.Value.Response);
                 }
 
                 // Generate based on context
